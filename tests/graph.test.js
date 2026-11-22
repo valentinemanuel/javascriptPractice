@@ -282,6 +282,18 @@ test('unweighted mode keeps new edges free of weight labels', () => {
   assert.equal(graph.getState().weighted, false);
 });
 
+test('dijkstra reconstructs the shortest path to a selected target', () => {
+  const graph = new Graph().reset();
+  const steps = [...graph.dijkstra('A', 'F')];
+  const done = steps.at(-1);
+
+  assert.equal(done.type, 'done');
+  assert.deepEqual(done.payload.path, ['A', 'B', 'D', 'E', 'F']);
+  assert.equal(done.payload.pathDistance, 14);
+  assert.equal(done.payload.pathEdges.length, 4);
+  assert.match(done.message, /Shortest path from A to F/);
+});
+
 test('dijkstra reports negative weights instead of producing wrong distances', () => {
   const graph = buildCustom(['A', 'B'], [['A', 'B', -3]]);
   const steps = [...graph.dijkstra('A')];
@@ -403,7 +415,7 @@ test('metadata declares signatures, fields and Omega/Theta/Big O bounds', () => 
     removeEdge: ['from', 'to'],
     bfs: ['start'],
     dfs: ['start'],
-    dijkstra: ['start'],
+    dijkstra: ['start', 'target'],
     useDirected: [],
     useUndirected: [],
     useWeighted: [],

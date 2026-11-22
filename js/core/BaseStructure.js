@@ -28,6 +28,11 @@ export class BaseStructure {
     throw new Error('seed() must be implemented by each structure');
   }
 
+  /** Empties the structure completely, keeping its structural defaults. */
+  clear() {
+    return this.reset();
+  }
+
   _resetIds() {
     this._idCounter = 0;
   }

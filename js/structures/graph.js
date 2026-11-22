@@ -143,9 +143,12 @@ export const meta = {
       worst: { symbol: 'O(V+E)', text: 'every vertex and edge is visited' },
     },
     dijkstra: {
-      signature: 'dijkstra(start)',
+      signature: 'dijkstra(start, target?)',
       label: 'Dijkstra shortest paths',
-      fields: [{ name: 'start', label: 'Start', type: 'string', placeholder: 'e.g. A' }],
+      fields: [
+        { name: 'start', label: 'Start', type: 'string', placeholder: 'e.g. A' },
+        { name: 'target', label: 'Target (optional)', type: 'string', placeholder: 'e.g. F', required: false },
+      ],
       description: 'Computes shortest weighted distances from the start vertex with a binary min-heap and reports every relaxation. All edge weights must be non-negative.',
       best: { symbol: 'Ω((V+E) log V)', text: 'the heap still orders every settled vertex' },
       average: { symbol: 'Θ((V+E) log V)', text: 'one push and pop per relaxation with logarithmic cost' },
@@ -200,6 +203,15 @@ export class Graph extends BaseStructure {
 
   initialState() {
     return createInitialState();
+  }
+
+  /** Graph seeds its demo regardless of arguments, so clear must bypass seed. */
+  clear() {
+    this._resetIds();
+    this.state = this.initialState();
+    this._labelIndex = new Map();
+    this._idIndex = new Map();
+    return this;
   }
 
   seed(_values = []) {
@@ -529,7 +541,7 @@ export class Graph extends BaseStructure {
     return order;
   }
 
-  *dijkstra(start) {
+  *dijkstra(start, target) {
     this._clearMarks();
     const source = this._nodeByLabel(start);
     if (!source) {
@@ -557,6 +569,7 @@ export class Graph extends BaseStructure {
     const heap = new MinHeap();
     heap.push(0, source.id);
     const settled = new Set();
+    const previous = new Map();
     const order = [];
 
     while (heap.size > 0) {
@@ -581,6 +594,7 @@ export class Graph extends BaseStructure {
         if (candidate >= dist.get(neighbor.id)) continue;
 
         dist.set(neighbor.id, candidate);
+        previous.set(neighbor.id, entry.id);
         this._nodeById(neighbor.id).dist = candidate;
         heap.push(candidate, neighbor.id);
         yield {
@@ -599,13 +613,45 @@ export class Graph extends BaseStructure {
     }
 
     const distances = this._distTable(dist);
+    const label = target === undefined || target === null ? '' : String(target).trim();
+    const destination = label === '' ? null : this._nodeByLabel(label);
+    let message = `Dijkstra finished with shortest distances from ${source.value}.`;
+    let pathInfo = {};
+
+    if (label !== '' && !destination) {
+      message = `Vertex ${label} does not exist; showing distances from ${source.value}.`;
+    } else if (destination) {
+      if (!settled.has(destination.id)) {
+        message = `No path exists from ${source.value} to ${destination.value}.`;
+        pathInfo = { path: [], target: destination.value };
+      } else {
+        const ids = [];
+        let cursor = destination.id;
+        while (cursor !== undefined && cursor !== null) {
+          ids.unshift(cursor);
+          cursor = previous.get(cursor);
+        }
+        const connects = (edge, a, b) => (edge.from === a && edge.to === b)
+          || (!(edge.directed ?? this.state.directed) && edge.from === b && edge.to === a);
+        const pathEdges = [];
+        for (let index = 1; index < ids.length; index += 1) {
+          const edge = this.state.edges.find((item) => connects(item, ids[index - 1], ids[index]));
+          if (edge) pathEdges.push({ from: edge.from, to: edge.to });
+        }
+        const path = ids.map((id) => this._labelForId(id));
+        const pathDistance = dist.get(destination.id);
+        message = `Shortest path from ${source.value} to ${destination.value}: ${path.join(' → ')} (total ${pathDistance}).`;
+        pathInfo = { path, pathIds: ids, pathEdges, pathDistance, target: destination.value };
+      }
+    }
+
     yield {
       type: 'done',
-      message: `Dijkstra finished with shortest distances from ${source.value}.`,
-      focus: this.state.nodes
+      message,
+      focus: pathInfo.pathIds ?? this.state.nodes
         .filter((node) => Number.isFinite(dist.get(node.id)))
         .map((node) => node.id),
-      payload: { distances, distTable: distances, order },
+      payload: { distances, distTable: distances, order, ...pathInfo },
     };
     return distances;
   }

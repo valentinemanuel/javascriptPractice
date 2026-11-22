@@ -710,7 +710,68 @@ function drawHash(scene, state, positions, step, focus, focusClass) {
   }
 }
 
-export function render(svg, state, positions = new Map(), step = {}) {
+function drawEmptyHint(scene, viewport = {}) {
+  const message = 'Empty structure — insert a value below or click Random data';
+  const width = viewport.width ?? 900;
+  const height = viewport.height ?? 560;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const boxWidth = Math.min(width - 40, Math.max(330, message.length * 6.4));
+
+  const hint = element('g', { class: 'empty-hint', 'data-empty-hint': 'true' });
+  hint.append(element('rect', {
+    x: centerX - boxWidth / 2,
+    y: centerY - 22,
+    width: boxWidth,
+    height: 44,
+    rx: '14',
+  }));
+  hint.append(element('text', {
+    x: centerX,
+    y: centerY + 5,
+  }, message));
+  scene.append(hint);
+}
+
+function ensureLayer(svg, id) {
+  let layer = svg.querySelector(`#${id}`);
+  if (!layer) {
+    layer = element('g', { id });
+    svg.append(layer);
+  }
+  return layer;
+}
+
+function drawResult(layer, step, viewport = {}) {
+  if (step.type !== 'done') return;
+  const payload = step.payload ?? {};
+  let text = '';
+  if (Array.isArray(payload.path) && payload.path.length > 0) {
+    const total = Number.isFinite(payload.pathDistance) ? ` (${payload.pathDistance})` : '';
+    text = `Shortest path: ${payload.path.join(' → ')}${total}`;
+  } else if (Array.isArray(payload.order) && payload.order.length > 0) {
+    text = `Traversal: ${payload.order.join(' → ')}`;
+  }
+  if (!text) return;
+
+  const width = viewport.width ?? 900;
+  const boxWidth = Math.min(width - 32, Math.max(220, text.length * 6.6 + 32));
+  const group = element('g', { class: 'result-banner' });
+  group.append(element('rect', {
+    x: (width - boxWidth) / 2,
+    y: 12,
+    width: boxWidth,
+    height: 32,
+    rx: '10',
+  }));
+  group.append(element('text', {
+    x: width / 2,
+    y: 33,
+  }, text));
+  layer.append(group);
+}
+
+export function render(svg, state, positions = new Map(), step = {}, viewport = {}) {
   if (!svg || !state) return;
   ensureDefs(svg);
 
@@ -723,6 +784,9 @@ export function render(svg, state, positions = new Map(), step = {}) {
   const transform = scene.getAttribute('transform');
   scene.replaceChildren();
   if (transform) scene.setAttribute('transform', transform);
+
+  const resultLayer = ensureLayer(svg, 'result-layer');
+  resultLayer.replaceChildren();
 
   const focus = new Set([
     ...(step.focus ?? []),
@@ -755,10 +819,13 @@ export function render(svg, state, positions = new Map(), step = {}) {
     [state.top, state.head, state.tail].filter((id) => id !== null && id !== undefined),
   );
 
+  if (nodes.length === 0 && !array) drawEmptyHint(scene, viewport);
+
   if (stacked) drawStackGuide(scene, positions);
   if (queue) drawQueueLane(scene, positions);
   if (array) drawArrayFreeCells(scene, positions);
 
+  const pathEdges = step.payload?.pathEdges ?? [];
   (state.edges ?? []).forEach((edge, order) => {
     let fromX = null;
     if (multiKey) {
@@ -769,7 +836,11 @@ export function render(svg, state, positions = new Map(), step = {}) {
       }
     }
     const drawn = drawEdge(edge, positions, focus, treeEdges, fromX);
-    if (drawn) scene.append(drawn);
+    if (!drawn) return;
+    if (pathEdges.some((item) => item.from === edge.from && item.to === edge.to)) {
+      drawn.setAttribute('class', `${drawn.getAttribute('class')} is-path`);
+    }
+    scene.append(drawn);
   });
 
   if (multiKey) drawLeafLinks(scene, state, positions, focus, focusClass);
@@ -791,4 +862,5 @@ export function render(svg, state, positions = new Map(), step = {}) {
   }
 
   drawPointerLabels(scene, state, positions);
+  drawResult(resultLayer, step, viewport);
 }

@@ -9,7 +9,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 ## Features
 
 - 12 structures, each with its own operation toolbar and complexity table.
-- Step-by-step playback: play, pause, single step, speed control and reset. Each step is numbered in the activity log, which auto-scrolls to the newest event. Press **Enter** in an argument field to run the primary operation and **Space** outside any control to toggle playback.
+- Step-by-step playback: play, pause, single step, speed control and reset. **Clear** in the header empties the active structure completely (keeping Array/Hash capacity slots and the Trie root), while **Reset** restores its demo state. The activity log has its own **Clear** button. Each step is numbered in the log, which auto-scrolls to the newest event. Press **Enter** in an argument field to run the primary operation and **Space** outside any control to toggle playback.
 - Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges and rounded edge badges. Linear structures are visually distinct: Stack blocks in an open frame, Queue blocks in a lane with FRONT/BACK flow arrows, and Array cells in a contiguous memory strip with dotted reserved-capacity slots.
 - Multi-key trees draw each branch from its own separator (left of the first key, between keys, right of the last key); B+ trees also link their leaves left to right with arrows.
 - Hash tables use a three-stage left-to-right diagram: an **Input Key** card, a **Hash Function** block showing the live calculation (`25 mod 7 = 4`) and a vertical **Index / Value** table. A curved arrow points to the resulting row, chaining nodes hang off that row, and probe attempts are numbered and animated.
@@ -20,7 +20,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
 - Hash table with four collision strategies, three hash functions and universal hashing.
-- Graph with directed/undirected and weighted/unweighted modes plus BFS, DFS and Dijkstra. Vertices can be dragged to rearrange the layout; Dijkstra shows each vertex's current distance and directed arrows stop at the destination circle's edge. A compact legend explains the node-state colors.
+- Graph with directed/undirected and weighted/unweighted modes plus BFS, DFS and Dijkstra. Vertices can be dragged to rearrange the layout; Dijkstra accepts an optional target, highlights the selected shortest path and announces it in a banner. Traversals show their visit order the same way. Each vertex shows its current distance and directed arrows stop at the destination circle's edge. A compact legend explains the node-state colors.
 - Pure logic modules tested in Node with the built-in test runner.
 
 ## Structures
@@ -68,7 +68,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-298 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+306 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

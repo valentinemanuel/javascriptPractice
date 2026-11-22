@@ -28,6 +28,8 @@ const stepButton = byId('step');
 const resetButton = byId('reset');
 const speedInput = byId('speed');
 const speedValue = byId('speed-value');
+const clearStructureButton = byId('clear-structure');
+const clearLogButton = byId('clear-log');
 
 let current = null;
 let activeOperation = null;
@@ -87,7 +89,14 @@ function fitSceneToViewport() {
   } catch {
     return;
   }
-  if (!box || !box.width || !box.height) return;
+  const isEmptyHint = Boolean(scene.querySelector('[data-empty-hint]'));
+  if (isEmptyHint || !box || !box.width || !box.height) {
+    zoom = 1;
+    panX = 0;
+    panY = 0;
+    applyTransform();
+    return;
+  }
 
   const stageRect = svg.getBoundingClientRect();
   const controlsRect = controlsPanel?.getBoundingClientRect();
@@ -106,7 +115,13 @@ function fitSceneToViewport() {
     bottom: Math.max(top + 80, bottom),
     maxScale: 1.35,
   });
-  if (!transform) return;
+  if (!transform) {
+    zoom = 1;
+    panX = 0;
+    panY = 0;
+    applyTransform();
+    return;
+  }
 
   zoom = transform.scale;
   panX = transform.translateX;
@@ -117,8 +132,9 @@ function fitSceneToViewport() {
 function draw(step = {}) {
   if (!current) return;
   const state = current.structure.getState();
-  const positions = current.entry.layout(state, viewport());
-  render(svg, state, positions, step);
+  const area = viewport();
+  const positions = current.entry.layout(state, area);
+  render(svg, state, positions, step, area);
   applyTransform();
 }
 
@@ -367,6 +383,22 @@ byId('random-data').addEventListener('click', () => {
   draw();
   fitSceneToViewport();
 });
+
+clearStructureButton.addEventListener('click', () => {
+  if (!current) return;
+  animator.stop();
+  current.structure.clear();
+  activeOperation = null;
+  stepCount = 0;
+  updateComplexity();
+  clearLog();
+  appendLog(`Cleared ${current.structure.meta.title}.`, 'info');
+  draw();
+  fitSceneToViewport();
+  fields.querySelector('input')?.focus();
+});
+
+clearLogButton.addEventListener('click', () => clearLog());
 
 byId('theme-toggle').addEventListener('click', (event) => {
   const root = document.documentElement;

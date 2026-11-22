@@ -424,6 +424,51 @@ test('distance labels show the current shortest distance', () => {
   assert.equal(labels[0].textContent, 'd = 7');
 });
 
+test('empty linear structures show a centred guide message', () => {
+  const structure = new registry.stack.Structure().clear();
+  const svg = new FakeNode('svg');
+  render(svg, structure.getState(), new Map(), {}, { width: 900, height: 560 });
+
+  const hints = withClass(all(svg), 'empty-hint');
+  assert.equal(hints.length, 1);
+  assert.equal(hints[0].attributes['data-empty-hint'], 'true');
+  assert.match(hints[0].children[1].textContent, /Empty structure/);
+});
+
+test('arrays and hash tables draw their slots instead of an empty hint', () => {
+  for (const id of ['array', 'hash-table']) {
+    const structure = new registry[id].Structure().clear();
+    const state = structure.getState();
+    const svg = new FakeNode('svg');
+    render(svg, state, registry[id].layout(state, { width: 900, height: 560 }), {});
+    assert.equal(withClass(all(svg), 'empty-hint').length, 0, id);
+  }
+});
+
+test('a finished shortest path is announced and its edges are highlighted', () => {
+  const structure = new registry.graph.Structure().clear();
+  for (const label of ['A', 'B', 'C']) drain(structure.addVertex(label));
+  drain(structure.addEdge('A', 'B', 2));
+  drain(structure.addEdge('B', 'C', 3));
+  const state = structure.getState();
+  const step = {
+    type: 'done',
+    payload: {
+      path: ['A', 'B', 'C'],
+      pathDistance: 5,
+      pathEdges: state.edges.map(({ from, to }) => ({ from, to })),
+    },
+  };
+  const svg = new FakeNode('svg');
+  render(svg, state, registry.graph.layout(state, { width: 900, height: 560 }), step, { width: 900 });
+
+  const banner = withClass(all(svg), 'result-banner');
+  assert.equal(banner.length, 1);
+  assert.match(banner[0].children[1].textContent, /Shortest path: A → B → C \(5\)/);
+  assert.ok(withClass(all(svg), 'is-path').length > 0);
+  assert.equal(state.edges.length, 2);
+});
+
 test('the scene transform survives repeated renders', () => {
   const svg = draw('bst');
   const scene = svg.querySelector('#scene');
