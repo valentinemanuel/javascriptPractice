@@ -10,7 +10,8 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 
 - 12 structures, each with its own operation toolbar and complexity table.
 - Step-by-step playback: play, pause, single step, speed control and reset. Each step is numbered in the activity log, which auto-scrolls to the newest event. Press **Enter** in an argument field to run the primary operation and **Space** outside any control to toggle playback.
-- Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges, rounded edge badges and FRONT/BACK / HEAD/TAIL markers on linear structures.
+- Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges and rounded edge badges. Linear structures are visually distinct: Stack blocks in an open frame, Queue blocks in a lane with FRONT/BACK flow arrows, and Array cells in a contiguous memory strip with dotted reserved-capacity slots.
+- Multi-key trees draw each branch from its own separator (left of the first key, between keys, right of the last key); B+ trees also link their leaves left to right with arrows.
 - Hash tables use a three-stage left-to-right diagram: an **Input Key** card, a **Hash Function** block showing the live calculation (`25 mod 7 = 4`) and a vertical **Index / Value** table. A curved arrow points to the resulting row, chaining nodes hang off that row, and probe attempts are numbered and animated.
 - Persistent controls: the operation bar stays visible and the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
 - An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It never touches the structure SVG.
@@ -67,7 +68,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-287 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+291 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

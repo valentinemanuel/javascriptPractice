@@ -284,10 +284,12 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
 .complexity-table { width: 100%; border-collapse: collapse; font-size: 11px; }
 .complexity-table th, .complexity-table td {
   border-bottom: 1px solid var(--border);
-  padding: 6px 4px;
+  padding: 6px 2px;
   text-align: left;
   vertical-align: middle;
 }
+.complexity-table th:first-child, .complexity-table td:first-child { padding-left: 0; }
+.complexity-table th:last-child, .complexity-table td:last-child { padding-right: 0; }
 .complexity-table thead th { color: var(--muted); font-weight: 600; }
 .complexity-table tbody th { font-weight: 600; }
 .complexity-table td { text-align: center; }
@@ -295,13 +297,16 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 3px 8px;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 3px 7px;
   border-radius: 999px;
   background: var(--accent-soft);
   color: var(--accent);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.25;
+  letter-spacing: 0;
   white-space: nowrap;
   cursor: help;
 }
@@ -367,12 +372,21 @@ html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
 .edge-label-text { fill: var(--text); font-size: 11px; font-weight: 600; text-anchor: middle; }
 .index-label, .distance-label { fill: var(--muted); font-size: 11px; text-anchor: middle; }
 .index-label.is-stacked { dominant-baseline: middle; }
-.stack-guide {
+.stack-guide, .queue-guide {
   stroke: var(--border);
   stroke-width: 1.5;
   stroke-linecap: round;
   opacity: 0.75;
 }
+.array-free-cell {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1.5;
+  stroke-dasharray: 3 4;
+  opacity: 0.65;
+}
+.array-free-index { fill: var(--muted); font-size: 10px; opacity: 0.7; text-anchor: middle; }
+.leaf-link { stroke: var(--edge); stroke-width: 1.6; }
 
 /* Nodes: subtle 3D volume with shared gradients */
 .node, .node circle, .node rect {
@@ -423,6 +437,9 @@ html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
 .pointer-label { fill: var(--muted); font-size: 10px; letter-spacing: 0.08em; text-anchor: middle; }
 .pointer-label.is-front { fill: var(--found); }
 .pointer-label.is-back { fill: var(--probe); }
+.pointer-arrow { stroke: var(--muted); stroke-width: 1.6; stroke-linecap: round; }
+.pointer-arrow.is-front { stroke: var(--found); }
+.pointer-arrow.is-back { stroke: var(--probe); }
 
 /* Hash diagram: keys -> hash function -> Index / Value table */
 .hash-key-arrow { stroke: var(--edge); stroke-width: 1.4; }

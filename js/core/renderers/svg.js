@@ -117,6 +117,88 @@ function labelFor(node) {
 }
 
 const STACK_BLOCK = { width: 96, height: 50, radius: 8 };
+const QUEUE_BLOCK = { height: 50, radius: 8, inset: 8 };
+
+function drawQueueLane(scene, positions) {
+  const slots = [...positions.values()].filter((position) => position.index !== undefined);
+  if (slots.length === 0) return;
+
+  const first = slots[0];
+  const last = slots.at(-1);
+  const left = first.x - (first.width ?? 78) / 2 - 16;
+  const right = last.x + (last.width ?? 78) / 2 + 16;
+  const top = first.y - QUEUE_BLOCK.height / 2 - 9;
+  const bottom = first.y + QUEUE_BLOCK.height / 2 + 9;
+
+  for (const y of [top, bottom]) {
+    scene.append(element('line', {
+      x1: left,
+      y1: y,
+      x2: right,
+      y2: y,
+      class: 'queue-guide',
+    }));
+  }
+}
+
+function drawArrayFreeCells(scene, positions) {
+  for (const position of positions.values()) {
+    if (!position.free) continue;
+    scene.append(element('rect', {
+      x: position.x - position.width / 2,
+      y: position.y - position.height / 2,
+      width: position.width,
+      height: position.height,
+      rx: '2',
+      class: 'array-free-cell',
+    }));
+    scene.append(element('text', {
+      x: position.x,
+      y: position.y + 52,
+      class: 'array-free-index',
+    }, `[${position.index}]`));
+  }
+}
+
+function drawLeafLinks(scene, state, positions, focus, focusClass) {
+  for (const node of state.nodes ?? []) {
+    if (node.next === undefined || node.next === null) continue;
+    const from = positions.get(node.id);
+    const to = positions.get(node.next);
+    if (!from || !to) continue;
+
+    const x1 = from.x + (from.width ?? 80) / 2 + 4;
+    const x2 = to.x - (to.width ?? 80) / 2 - 5;
+    if (x2 <= x1) continue;
+
+    const highlighted = focus.has(node.id) || focus.has(node.next);
+    scene.append(element('line', {
+      x1,
+      y1: from.y,
+      x2,
+      y2: to.y,
+      class: `leaf-link${highlighted ? ` ${focusClass}` : ''}`,
+      'marker-end': highlighted ? 'url(#arrowhead-active)' : 'url(#arrowhead)',
+    }));
+  }
+}
+
+function childAnchor(node, position, childIndex, childCount) {
+  const keys = node.keys ?? [];
+  if (keys.length === 0 || childCount < 2) return position.x;
+
+  const width = position.width ?? Math.max(88, keys.length * 44 + 16);
+  const left = position.x - width / 2;
+  const cellWidth = width / keys.length;
+  const inset = Math.min(10, cellWidth * 0.25);
+
+  if (childCount !== keys.length + 1) {
+    return left + inset + (childIndex / (childCount - 1)) * (width - inset * 2);
+  }
+  if (childIndex <= 0) return left + inset;
+  if (childIndex >= childCount - 1) return left + width - inset;
+  return left + childIndex * cellWidth;
+}
 
 function drawStackGuide(scene, positions) {
   const slots = [...positions.values()].filter((position) => position.index !== undefined);
@@ -156,11 +238,12 @@ function drawEdgeBadge(group, x, y, value) {
   group.append(badge);
 }
 
-function drawEdge(edge, positions, focus, treeEdge = false) {
+function drawEdge(edge, positions, focus, treeEdge = false, fromX = null) {
   const from = positions.get(edge.from);
   const to = positions.get(edge.to);
   if (!from || !to) return null;
 
+  const startX = fromX ?? from.x;
   const highlighted = focus.has(edge.from) || focus.has(edge.to);
   const marker = highlighted ? 'url(#arrowhead-active)' : 'url(#arrowhead)';
   const group = element('g', { class: 'edge-group' });
@@ -168,7 +251,7 @@ function drawEdge(edge, positions, focus, treeEdge = false) {
   if (treeEdge) {
     const midY = (from.y + to.y) / 2;
     group.append(element('path', {
-      d: `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`,
+      d: `M ${startX} ${from.y} C ${startX} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`,
       class: `edge edge-tree${highlighted ? ' is-focus' : ''}`,
       'marker-end': edge.directed || edge.side ? marker : undefined,
     }));
@@ -185,12 +268,12 @@ function drawEdge(edge, positions, focus, treeEdge = false) {
 
   const badgeText = edge.label ?? edge.weight;
   if (badgeText !== undefined) {
-    drawEdgeBadge(group, (from.x + to.x) / 2, (from.y + to.y) / 2, badgeText);
+    drawEdgeBadge(group, (startX + to.x) / 2, (from.y + to.y) / 2, badgeText);
   }
   return group;
 }
 
-function drawNode(node, position, focusClass, isPointer = false, stacked = false) {
+function drawNode(node, position, focusClass, isPointer = false, variant = 'circle') {
   const classes = ['node'];
   if (focusClass) classes.push(focusClass);
   if (node.terminal) classes.push('is-terminal');
@@ -203,19 +286,30 @@ function drawNode(node, position, focusClass, isPointer = false, stacked = false
     'aria-label': `${node.tombstone ? 'deleted slot' : labelFor(node)}${node.dist !== undefined ? `, distance ${node.dist}` : ''}`,
     tabindex: '0',
   });
-  const width = stacked
+  const width = variant === 'stack'
     ? STACK_BLOCK.width
-    : position.width ?? (Array.isArray(node.keys) ? Math.max(88, node.keys.length * 44 + 16) : 54);
-  const height = stacked ? STACK_BLOCK.height : position.height ?? 50;
+    : variant === 'queue'
+      ? Math.max(60, (position.width ?? 78) - QUEUE_BLOCK.inset)
+      : position.width ?? (Array.isArray(node.keys) ? Math.max(88, node.keys.length * 44 + 16) : 54);
+  const height = variant === 'stack'
+    ? STACK_BLOCK.height
+    : variant === 'queue'
+      ? QUEUE_BLOCK.height
+      : position.height ?? 50;
 
-  if (stacked) {
-    group.append(element('rect', {
+  if (variant === 'stack' || variant === 'queue' || variant === 'array') {
+    const rect = {
       x: position.x - width / 2,
       y: position.y - height / 2,
       width,
       height,
-      rx: String(STACK_BLOCK.radius),
-    }));
+    };
+    if (variant === 'array') {
+      rect.class = 'array-cell';
+    } else {
+      rect.rx = String(variant === 'stack' ? STACK_BLOCK.radius : QUEUE_BLOCK.radius);
+    }
+    group.append(element('rect', rect));
     group.append(element('text', {
       x: position.x,
       y: position.y + 6,
@@ -299,14 +393,31 @@ function drawPointerLabels(scene, state, positions) {
     }
   }
 
+  const queue = state.headLabel === 'FRONT' || state.tailLabel === 'BACK';
   for (const [id, text, className] of marks) {
     const position = positions.get(id);
     if (!position) continue;
+    const y = queue
+      ? position.y - QUEUE_BLOCK.height / 2 - 34
+      : position.y - (position.radius ?? 33) - 18;
     scene.append(element('text', {
       x: position.x,
-      y: position.y - (position.radius ?? 33) - 18,
+      y,
       class: `pointer-label ${className}`,
     }, text));
+
+    if (queue) {
+      const direction = className === 'is-front' ? -1 : 1;
+      scene.append(element('line', {
+        x1: position.x - direction * 10,
+        y1: y + 12,
+        x2: position.x + direction * 18,
+        y2: y + 12,
+        class: `pointer-arrow ${className}`,
+        'marker-end': className === 'is-front'
+          ? 'url(#arrowhead-active)' : 'url(#arrowhead)',
+      }));
+    }
   }
 }
 
@@ -606,22 +717,47 @@ export function render(svg, state, positions = new Map(), step = {}) {
 
   const treeEdges = Object.prototype.hasOwnProperty.call(state, 'root');
   const stacked = state.orientation === 'vertical';
+  const queue = state.headLabel === 'FRONT' || state.tailLabel === 'BACK';
+  const array = Number.isInteger(state.capacity) && Array.isArray(state.items)
+    && state.head === undefined;
+  const nodes = nodeList(state);
+  const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const multiKey = treeEdges && nodes.some((node) => Array.isArray(node.keys));
+  const outgoing = new Map();
+  if (multiKey) {
+    for (const edge of state.edges ?? []) {
+      outgoing.set(edge.from, (outgoing.get(edge.from) ?? 0) + 1);
+    }
+  }
   const pointerIds = new Set(
     [state.top, state.head, state.tail].filter((id) => id !== null && id !== undefined),
   );
 
   if (stacked) drawStackGuide(scene, positions);
+  if (queue) drawQueueLane(scene, positions);
+  if (array) drawArrayFreeCells(scene, positions);
 
-  for (const edge of state.edges ?? []) {
-    const drawn = drawEdge(edge, positions, focus, treeEdges);
+  (state.edges ?? []).forEach((edge, order) => {
+    let fromX = null;
+    if (multiKey) {
+      const node = nodeById.get(edge.from);
+      const position = positions.get(edge.from);
+      if (node && position) {
+        fromX = childAnchor(node, position, edge.index ?? order, outgoing.get(edge.from) ?? 1);
+      }
+    }
+    const drawn = drawEdge(edge, positions, focus, treeEdges, fromX);
     if (drawn) scene.append(drawn);
-  }
+  });
 
-  for (const node of nodeList(state)) {
+  if (multiKey) drawLeafLinks(scene, state, positions, focus, focusClass);
+
+  const variant = stacked ? 'stack' : queue ? 'queue' : array ? 'array' : 'circle';
+  for (const node of nodes) {
     const position = positions.get(node.id);
     if (!position) continue;
     const className = focus.has(node.id) ? focusClass : '';
-    scene.append(drawNode(node, position, className, pointerIds.has(node.id), stacked));
+    scene.append(drawNode(node, position, className, pointerIds.has(node.id), variant));
     if (position.index !== undefined) {
       scene.append(element('text', {
         x: stacked ? position.x - STACK_BLOCK.width / 2 - 22 : position.x,

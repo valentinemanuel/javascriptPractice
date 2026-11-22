@@ -132,7 +132,7 @@ test('the class exposes static metadata for the app shell', () => {
 
 test('enqueue declares its numeric value field', () => {
   assert.deepEqual(meta.operations.enqueue.fields, [
-    { name: 'value', label: 'Value', type: 'number' },
+    { name: 'value', label: 'Value', type: 'number', placeholder: 'e.g. 42' },
   ]);
   for (const name of ['dequeue', 'peek', 'isEmpty']) {
     assert.equal(meta.operations[name].fields, undefined);

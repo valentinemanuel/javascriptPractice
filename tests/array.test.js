@@ -228,17 +228,17 @@ test('metadata declares Omega, Theta and Big O for every operation', () => {
 
 test('metadata declares the argument fields in operation order', () => {
   assert.deepEqual(meta.operations.access.fields, [
-    { name: 'index', label: 'Index', type: 'number' },
+    { name: 'index', label: 'Index', type: 'number', placeholder: 'e.g. 0' },
   ]);
   assert.deepEqual(meta.operations.insert.fields, [
-    { name: 'index', label: 'Index', type: 'number' },
-    { name: 'value', label: 'Value', type: 'number' },
+    { name: 'index', label: 'Index', type: 'number', placeholder: 'e.g. 2' },
+    { name: 'value', label: 'Value', type: 'number', placeholder: 'e.g. 42' },
   ]);
   assert.deepEqual(meta.operations.delete.fields, [
-    { name: 'index', label: 'Index', type: 'number' },
+    { name: 'index', label: 'Index', type: 'number', placeholder: 'e.g. 1' },
   ]);
   assert.deepEqual(meta.operations.search.fields, [
-    { name: 'value', label: 'Value', type: 'number' },
+    { name: 'value', label: 'Value', type: 'number', placeholder: 'e.g. 7' },
   ]);
 });
 

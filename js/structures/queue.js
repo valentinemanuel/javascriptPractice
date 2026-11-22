@@ -11,7 +11,7 @@ export const meta = {
     enqueue: {
       signature: 'enqueue(value)',
       label: 'Enqueue',
-      fields: [{ name: 'value', label: 'Value', type: 'number' }],
+      fields: [{ name: 'value', label: 'Value', type: 'number', placeholder: 'e.g. 42' }],
       description: 'Adds an element to the back of the queue.',
       best: { symbol: 'Ω(1)', text: 'append at the tail' },
       average: { symbol: 'Θ(1)', text: 'constant time' },

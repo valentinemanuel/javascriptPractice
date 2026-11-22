@@ -11,7 +11,7 @@ export const meta = {
     access: {
       signature: 'access(index)',
       label: 'Access',
-      fields: [{ name: 'index', label: 'Index', type: 'number' }],
+      fields: [{ name: 'index', label: 'Index', type: 'number', placeholder: 'e.g. 0' }],
       description: 'Returns the value stored at the given index.',
       best: { symbol: 'Ω(1)', text: 'the index is used directly' },
       average: { symbol: 'Θ(1)', text: 'constant time regardless of size' },
@@ -21,8 +21,8 @@ export const meta = {
       signature: 'insert(index, value)',
       label: 'Insert',
       fields: [
-        { name: 'index', label: 'Index', type: 'number' },
-        { name: 'value', label: 'Value', type: 'number' },
+        { name: 'index', label: 'Index', type: 'number', placeholder: 'e.g. 2' },
+        { name: 'value', label: 'Value', type: 'number', placeholder: 'e.g. 42' },
       ],
       description: 'Inserts a value at the given index, shifting later elements right and doubling the capacity when the array is full.',
       best: { symbol: 'Ω(1)', text: 'appending at the end with spare capacity' },
@@ -32,7 +32,7 @@ export const meta = {
     delete: {
       signature: 'delete(index)',
       label: 'Delete',
-      fields: [{ name: 'index', label: 'Index', type: 'number' }],
+      fields: [{ name: 'index', label: 'Index', type: 'number', placeholder: 'e.g. 1' }],
       description: 'Removes the value at the given index and shifts the following elements left.',
       best: { symbol: 'Ω(1)', text: 'removing the last element needs no shift' },
       average: { symbol: 'Θ(n)', text: 'half of the elements shift on average' },
@@ -41,7 +41,7 @@ export const meta = {
     search: {
       signature: 'search(value)',
       label: 'Search',
-      fields: [{ name: 'value', label: 'Value', type: 'number' }],
+      fields: [{ name: 'value', label: 'Value', type: 'number', placeholder: 'e.g. 7' }],
       description: 'Finds the first index whose value equals the given value.',
       best: { symbol: 'Ω(1)', text: 'the value is in the first cell' },
       average: { symbol: 'Θ(n)', text: 'half of the cells are compared on average' },

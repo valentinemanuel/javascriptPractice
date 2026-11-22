@@ -212,27 +212,142 @@ test('stack uses rounded blocks, an open guide frame and centred index labels', 
   assert.ok(blocks.every((block) => block.attributes.rx === '8'));
 });
 
-test('horizontal structures keep their original labels and circular nodes', () => {
-  const svg = draw('array');
-  const nodes = all(svg);
-  const structure = new registry.array.Structure();
-  structure.reset(structure.meta.demo);
+test('array draws a contiguous cell strip with reserved free slots', () => {
+  const structure = new registry.array.Structure().reset([5, 9]);
   const state = structure.getState();
+  assert.ok(state.capacity > state.items.length);
+
   const positions = registry.array.layout(state, { width: 900, height: 560 });
+  const svg = new FakeNode('svg');
+  render(svg, state, positions, {});
+  const nodes = all(svg);
+
+  const cells = withClass(nodes, 'array-cell');
+  assert.equal(cells.length, state.items.length);
+  const free = withClass(nodes, 'array-free-cell');
+  assert.equal(free.length, state.capacity - state.items.length);
+  assert.equal(withClass(nodes, 'array-free-index').length, free.length);
+
+  const sorted = [...cells].sort((a, b) => Number(a.attributes.x) - Number(b.attributes.x));
+  for (let index = 1; index < sorted.length; index += 1) {
+    const previous = sorted[index - 1];
+    const current = sorted[index];
+    assert.equal(
+      Number(previous.attributes.x) + Number(previous.attributes.width),
+      Number(current.attributes.x),
+    );
+  }
 
   const labels = withClass(nodes, 'index-label');
   assert.equal(labels.length, state.items.length);
   labels.forEach((label, index) => {
     const position = positions.get(state.items[index].id);
-    assert.equal(label.attributes.x, String(position.x));
     assert.equal(label.attributes.y, String(position.y + 52));
-    assert.equal(label.attributes.class, 'index-label');
   });
 
-  assert.equal(withClass(nodes, 'stack-guide').length, 0);
+  const stripMidpoint = (layout) => {
+    const boxes = [...layout.values()].filter((position) => position.free !== undefined
+      || position.index !== undefined);
+    const left = Math.min(...boxes.map((position) => position.x - position.width / 2));
+    const right = Math.max(...boxes.map((position) => position.x + position.width / 2));
+    return (left + right) / 2;
+  };
+  assert.equal(stripMidpoint(positions), 450);
+
+  const grown = new registry.array.Structure().reset([5, 9, 2, 7]);
+  drain(grown.insert(4, 42));
+  const grownState = grown.getState();
+  assert.equal(grownState.capacity, 8);
+  const grownPositions = registry.array.layout(grownState, { width: 900, height: 560 });
+  assert.equal(stripMidpoint(grownPositions), 450);
+
+  assert.equal(withClass(nodes, 'queue-guide').length, 0);
+  assert.ok(withClass(nodes, 'node').every(
+    (node) => !node.children.some((child) => child.name === 'circle'),
+  ));
+});
+
+test('queue uses a horizontal lane, rounded blocks and FRONT/BACK arrows', () => {
+  const nodes = all(draw('queue'));
+  assert.equal(withClass(nodes, 'queue-guide').length, 2);
+
+  const arrows = withClass(nodes, 'pointer-arrow');
+  assert.equal(arrows.length, 2);
+  const frontArrow = arrows.find((arrow) => arrow.attributes.class.includes('is-front'));
+  const backArrow = arrows.find((arrow) => arrow.attributes.class.includes('is-back'));
+  assert.ok(frontArrow && backArrow);
+  assert.ok(Number(frontArrow.attributes.x2) < Number(frontArrow.attributes.x1));
+  assert.ok(Number(backArrow.attributes.x2) > Number(backArrow.attributes.x1));
+  assert.ok(arrows.every((arrow) => arrow.attributes['marker-end']));
+
+  const frontLabel = withClass(nodes, 'pointer-label')
+    .find((label) => label.attributes.class.includes('is-front'));
+  const laneTop = Math.min(...withClass(nodes, 'queue-guide')
+    .map((guide) => Number(guide.attributes.y1)));
+  assert.ok(Number(frontLabel.attributes.y) < Number(frontArrow.attributes.y1));
+  assert.ok(Number(frontArrow.attributes.y1) < laneTop);
+
+  const blocks = withClass(nodes, 'node')
+    .flatMap((node) => node.children.filter((child) => child.name === 'rect' && child.attributes.rx === '8'));
+  assert.equal(blocks.length, 3);
+});
+
+test('linked list keeps circular nodes and HEAD/TAIL labels', () => {
+  const nodes = all(draw('linked-list'));
+  const labels = withClass(nodes, 'pointer-label');
+  assert.ok(labels.some((label) => label.textContent === 'HEAD'));
+  assert.ok(labels.some((label) => label.textContent === 'TAIL'));
   assert.ok(withClass(nodes, 'node').every(
     (node) => node.children.some((child) => child.name === 'circle'),
   ));
+  assert.equal(withClass(nodes, 'queue-guide').length, 0);
+  assert.equal(withClass(nodes, 'stack-guide').length, 0);
+  assert.equal(withClass(nodes, 'pointer-arrow').length, 0);
+});
+
+test('multi-key tree edges start at their own separator', () => {
+  const structure = new registry.btree.Structure().reset(registry.btree.Structure.meta.demo);
+  const state = structure.getState();
+  const positions = registry.btree.layout(state, { width: 900, height: 560 });
+  const svg = new FakeNode('svg');
+  render(svg, state, positions, {});
+  const paths = withClass(all(svg), 'edge-tree');
+
+  const grouped = new Map();
+  state.edges.forEach((edge, order) => {
+    if (!grouped.has(edge.from)) grouped.set(edge.from, []);
+    grouped.get(edge.from).push({ edge, order });
+  });
+  const parent = [...grouped.values()].find((entries) => entries.length > 1);
+  assert.ok(parent, 'the demo tree must have a parent with several children');
+
+  const starts = parent.map(({ order }) => {
+    const match = paths[order].attributes.d.match(/^M ([\d.-]+)/);
+    assert.ok(match);
+    return Number(match[1]);
+  });
+  assert.equal(new Set(starts).size, starts.length);
+  assert.ok(starts.every((value, index) => index === 0 || value > starts[index - 1]));
+  assert.ok(starts[0] < positions.get(parent[0].edge.from).x);
+  assert.ok(starts.at(-1) > positions.get(parent[0].edge.from).x);
+});
+
+test('B+ tree connects its leaves with horizontal arrows', () => {
+  const structure = new registry['b-plus-tree'].Structure();
+  structure.reset(registry['b-plus-tree'].Structure.meta.demo);
+  const state = structure.getState();
+  const linked = state.nodes.filter((node) => node.next !== null && node.next !== undefined);
+  assert.ok(linked.length > 0);
+
+  const positions = registry['b-plus-tree'].layout(state, { width: 900, height: 560 });
+  const svg = new FakeNode('svg');
+  render(svg, state, positions, {});
+  const links = withClass(all(svg), 'leaf-link');
+  assert.equal(links.length, linked.length);
+  for (const link of links) {
+    assert.equal(link.attributes.y1, link.attributes.y2);
+    assert.ok(link.attributes['marker-end']);
+  }
 });
 
 test('the scene transform survives repeated renders', () => {
