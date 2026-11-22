@@ -26,6 +26,23 @@ function drain(iterator) {
   for (const _step of iterator) { /* settings are applied without animation */ }
 }
 
+/** True when a state has no user data, even if it keeps structural slots. */
+export function isEmptyState(state) {
+  if (!state || typeof state !== 'object') return true;
+  if (Array.isArray(state.buckets)) {
+    return state.buckets.every((bucket) => (bucket.items ?? [])
+      .every((item) => item.tombstone === true));
+  }
+  if (Array.isArray(state.items)) return state.items.length === 0;
+  if (Array.isArray(state.nodes)) {
+    return state.nodes.every((node) => {
+      if (Array.isArray(node.keys)) return node.keys.length === 0;
+      return node.value === undefined || node.value === '';
+    });
+  }
+  return true;
+}
+
 export function createFileName(id, extension) {
   const safeId = String(id).replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '');
   return `structlab-${safeId || 'state'}.${extension}`;

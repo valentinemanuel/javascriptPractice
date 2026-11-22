@@ -7,6 +7,7 @@ import {
   createFileName,
   createPayload,
   createStructure,
+  isEmptyState,
   parsePayload,
   sceneViewport,
   settingsFor,
@@ -17,6 +18,29 @@ function run(iterator) {
   while (!result.done) result = iterator.next();
   return result.value;
 }
+
+test('empty states are detected while structural slots are ignored', () => {
+  for (const [id, entry] of Object.entries(registry)) {
+    const structure = new entry.Structure().clear();
+    assert.equal(isEmptyState(structure.getState()), true, id);
+    structure.reset(structure.meta.demo ?? []);
+    assert.equal(isEmptyState(structure.getState()), false, id);
+  }
+});
+
+test('structures emptied by deletions are still considered empty', () => {
+  const table = new registry['hash-table'].Structure().clear();
+  run(table.useLinearProbing());
+  run(table.put(7));
+  run(table.remove(7));
+  assert.equal(table.getState().size, 0);
+  assert.equal(isEmptyState(table.getState()), true);
+
+  const tree = new registry['b-plus-tree'].Structure().reset([1, 2, 3]);
+  const keys = tree.getState().nodes.flatMap((node) => [...node.keys]);
+  for (const key of keys) run(tree.delete(key));
+  assert.equal(isEmptyState(tree.getState()), true);
+});
 
 test('the export payload follows the StructLab schema', () => {
   const state = new registry.graph.Structure().reset().getState();

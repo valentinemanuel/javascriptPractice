@@ -12,6 +12,7 @@ import {
   createStructure,
   downloadJson,
   exportSvgPng,
+  isEmptyState,
   parsePayload,
   readJsonFile,
   themeVariables,
@@ -40,6 +41,7 @@ const speedInput = byId('speed');
 const speedValue = byId('speed-value');
 const clearStructureButton = byId('clear-structure');
 const clearLogButton = byId('clear-log');
+const exportPngButton = byId('export-png');
 const stageWrap = byId('stage-wrap');
 const importFileInput = byId('import-json');
 const jsonModal = byId('json-modal');
@@ -154,6 +156,7 @@ function draw(step = {}) {
   const area = viewport();
   const positions = current.entry.layout(state, area);
   render(svg, state, positions, step, area);
+  exportPngButton.disabled = isEmptyState(state);
   applyTransform();
 }
 
@@ -421,6 +424,10 @@ clearLogButton.addEventListener('click', () => clearLog());
 
 byId('export-png').addEventListener('click', async () => {
   if (!current) return;
+  if (isEmptyState(current.structure.getState())) {
+    appendLog('Cannot export a PNG: the structure is empty. Add data first.', 'miss');
+    return;
+  }
   try {
     const variables = themeVariables();
     await exportSvgPng(svg, current.id, {
