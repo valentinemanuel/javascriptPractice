@@ -52,7 +52,7 @@ const importFileInput = byId('import-json');
 const layout = document.querySelector('.layout');
 const toggleLeft = byId('toggle-left');
 const toggleRight = byId('toggle-right');
-const toggleCenter = byId('toggle-center');
+
 const jsonModal = byId('json-modal');
 const exportJsonText = byId('export-json-text');
 const importJsonText = byId('import-json-text');
@@ -82,7 +82,6 @@ function applySidebarState() {
   layout.className = sidebarClasses(sidebarState);
   toggleLeft.setAttribute('aria-pressed', String(sidebarState.left));
   toggleRight.setAttribute('aria-pressed', String(sidebarState.right));
-  toggleCenter.setAttribute('aria-pressed', String(sidebarState.center));
 }
 
 function positionEdgeToggles() {
@@ -97,11 +96,6 @@ function positionEdgeToggles() {
     toggleLeft.style.left = `${Math.max(4, leftRect.right - layoutRect.left - 13)}px`;
     toggleRight.style.right = `${Math.max(4, layoutRect.right - rightRect.left - 13)}px`;
   }
-
-  const stageRect = layout.querySelector('.stage-panel').getBoundingClientRect();
-  toggleCenter.style.left = stageRect.width === 0
-    ? ''
-    : `${stageRect.left - layoutRect.left + stageRect.width / 2}px`;
 }
 
 function scheduleRefit() {
@@ -124,7 +118,6 @@ function toggleSidebar(side) {
 
 toggleLeft.addEventListener('click', () => toggleSidebar('left'));
 toggleRight.addEventListener('click', () => toggleSidebar('right'));
-toggleCenter.addEventListener('click', () => toggleSidebar('center'));
 layout.addEventListener('transitionend', (event) => {
   if (event.target !== layout || event.propertyName !== 'grid-template-columns') return;
   clearTimeout(refitTimer);

@@ -162,14 +162,6 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
 }
 .edge-toggle.left { left: max(4px, calc(12px + var(--left-col) - 13px)); }
 .edge-toggle.right { right: max(4px, calc(12px + var(--right-col) - 13px)); }
-.edge-toggle.center {
-  top: 4px;
-  left: 50%;
-  width: 40px;
-  height: 22px;
-  transform: translateX(-50%);
-  border-radius: 7px;
-}
 .edge-toggle[aria-pressed="true"] {
   color: var(--accent);
   border-color: var(--accent);
@@ -181,11 +173,10 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   --left-col: var(--left-width);
   --right-col: var(--right-width);
   --left-track: var(--left-col);
-  --center-track: minmax(0, 1fr);
   --right-track: var(--right-col);
   position: relative;
   display: grid;
-  grid-template-columns: var(--left-track) var(--center-track) var(--right-track);
+  grid-template-columns: var(--left-track) minmax(0, 1fr) var(--right-track);
   gap: 12px;
   padding: 12px;
   min-height: 0;
@@ -193,9 +184,6 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
 }
 .layout.left-collapsed { --left-col: 0px; }
 .layout.right-collapsed { --right-col: 0px; }
-.layout.center-collapsed { --center-track: 0px; }
-.layout.center-collapsed:not(.left-collapsed) { --left-track: minmax(var(--left-width), 1fr); }
-.layout.center-collapsed:not(.right-collapsed) { --right-track: minmax(var(--right-width), 1fr); }
 
 .sidebar, .info-panel, .stage-panel {
   border: 1px solid var(--border);
@@ -232,12 +220,6 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   background: transparent;
   border-color: transparent;
   box-shadow: none;
-  transition: opacity 180ms ease, transform 280ms ease;
-}
-.layout.center-collapsed .stage-panel {
-  opacity: 0;
-  transform: scale(0.98);
-  pointer-events: none;
 }
 .sidebar h2, .info-panel h2 {
   font-size: 11px;
@@ -771,8 +753,7 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   .stage-panel { min-height: 70vh; }
   .sidebar, .info-panel { max-height: 40vh; }
   .layout.left-collapsed .sidebar,
-  .layout.right-collapsed .info-panel,
-  .layout.center-collapsed .stage-panel { display: none; }
+  .layout.right-collapsed .info-panel { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
