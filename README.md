@@ -37,7 +37,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 
 - **Collision strategies:** separate chaining with linked lists, linear probing, quadratic probing and double hashing.
 - **Hash functions:** `k mod m`, multiplication (Knuth golden ratio) and universal hashing `h(k) = ((a·k + b) mod p) mod m` with **New universal family** to regenerate `(a, b)`.
-- **Visual feedback:** home bucket, every probe, collisions, tombstones, load factor and animated rehashing.
+- **Visual feedback:** home bucket, every probe, collisions, tombstones and animated rehashing.
 
 ### Graph details
 
@@ -47,13 +47,13 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 
 ## Run it
 
-Open `index.html` directly, or serve the folder:
+A local server is required because the app uses ES modules, which browsers block over `file://`.
 
 ```sh
 python -m http.server 8080
 ```
 
-Then visit `http://localhost:8080`.
+Then visit `http://localhost:8080`. Alternatively, use the live demo linked at the top.
 
 ## Tests
 
@@ -61,7 +61,7 @@ Then visit `http://localhost:8080`.
 npm test
 ```
 
-244 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+248 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

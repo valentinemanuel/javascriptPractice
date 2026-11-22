@@ -92,6 +92,7 @@ export class Animator {
       clearTimeout(this._timer);
       this._timer = null;
       this.onDone?.(result.value);
+      this._emitStatus();
       return true;
     }
     this.onStep?.(result.value);
