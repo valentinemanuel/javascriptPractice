@@ -172,6 +172,8 @@ button[disabled] { opacity: 0.45; cursor: not-allowed; }
 .node.is-miss circle, .node.is-miss rect { stroke: var(--miss); fill: rgba(248, 81, 73, 0.18); }
 .node.is-probe circle, .node.is-probe rect, .node.is-collision circle, .node.is-collision rect, .bucket.is-collision rect { stroke: var(--probe); fill: rgba(188, 140, 255, 0.18); }
 .node.is-rotate circle, .node.is-rotate rect { stroke: var(--compare); fill: rgba(242, 204, 96, 0.2); }
+.node.is-tombstone circle { stroke: var(--miss); fill: transparent; stroke-dasharray: 4 3; }
+.node.is-tombstone text { fill: var(--miss); }
 
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 190px minmax(0, 1fr); }

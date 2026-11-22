@@ -8,9 +8,11 @@ import { BTree } from './structures/btree.js';
 import { BPlusTree } from './structures/b-plus-tree.js';
 import { Trie } from './structures/trie.js';
 import { NaryTree } from './structures/n-ary-tree.js';
+import { HashTable } from './structures/hash-table.js';
 import { compute as computeLinear } from './core/layout/linear.js';
 import { compute as computeTree } from './core/layout/tree.js';
 import { compute as computeMultiKey } from './core/layout/multiKey.js';
+import { compute as computeHash } from './core/layout/hash.js';
 
 /**
  * Adding a structure means adding one entry here. The app shell stays untouched.
@@ -26,4 +28,5 @@ export const registry = {
   'b-plus-tree': { Structure: BPlusTree, layout: computeMultiKey, group: 'Trees' },
   trie: { Structure: Trie, layout: computeTree, group: 'Trees' },
   'n-ary-tree': { Structure: NaryTree, layout: computeTree, group: 'Trees' },
+  'hash-table': { Structure: HashTable, layout: computeHash, group: 'Hashing' },
 };

@@ -62,6 +62,7 @@ function nodeList(state) {
 }
 
 function labelFor(node) {
+  if (node.tombstone) return '×';
   if (Array.isArray(node.keys)) return node.keys.join(' | ');
   if (node.value !== undefined) return String(node.value);
   return node.id;
@@ -102,9 +103,9 @@ function drawEdge(edge, positions, focus) {
 
 function drawNode(node, position, focusClass) {
   const group = element('g', {
-    class: `node${focusClass ? ` ${focusClass}` : ''}`,
+    class: `node${focusClass ? ` ${focusClass}` : ''}${node.tombstone ? ' is-tombstone' : ''}`,
     'data-id': node.id,
-    'aria-label': `${labelFor(node)}${node.dist !== undefined ? `, distance ${node.dist}` : ''}`,
+    'aria-label': `${node.tombstone ? 'deleted slot' : labelFor(node)}${node.dist !== undefined ? `, distance ${node.dist}` : ''}`,
     tabindex: '0',
   });
   const width = position.width ?? (Array.isArray(node.keys) ? Math.max(78, node.keys.length * 40 + 14) : 46);

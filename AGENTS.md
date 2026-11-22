@@ -34,8 +34,9 @@ vanilla JavaScript ES modules.
 - Every structure exports a class extending `BaseStructure` with `reset(values)`,
   `seed(values)` and `getState()`. The class must also declare `static meta = meta;`
   so the app shell can build the sidebar before instantiating anything.
-- Hash bucket items are objects with at least `{ id, value }`, and the hash
-  layout must emit a position for every bucket id and every bucket item id.
+- Hash bucket items are objects with at least `{ id, value }`. Open addressing
+  deleted slots use `tombstone: true` and must keep their id and position; the
+  hash layout must emit a position for every bucket id and every bucket item id.
 - Tests use `node:test` and `node:assert`. Verify with `npm test`.
 - Use stable, unique ids (for example `n1`, `n2`, `cell-0`, `bucket-2`).
 
