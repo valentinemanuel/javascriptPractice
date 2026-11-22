@@ -63,3 +63,11 @@ More structures are added in phases; check the sidebar in the app for the curren
 | 2 | BST, AVL, B-Tree, B+ Tree, Trie, N-ary Tree |
 | 3 | Hash Table |
 | 4 | Graph |
+
+## Roadmap
+
+- Phase 3 adds the hash table with separate chaining and linear, quadratic and
+  double probing, plus universal hashing.
+- Phase 4 adds directed and undirected graphs with BFS, DFS and Dijkstra.
+- GitHub Pages publishing is enabled from the `main` branch once the first push
+  is made.
