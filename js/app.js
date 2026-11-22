@@ -2,6 +2,7 @@ import { registry } from './registry.js';
 import { Animator } from './core/Animator.js';
 import { render } from './core/renderers/svg.js';
 import { renderComplexity } from './core/complexity.js';
+import { initBackground } from './ui/background.js';
 
 const byId = (id) => document.getElementById(id);
 const svg = byId('stage');
@@ -309,6 +310,7 @@ window.addEventListener('hashchange', () => {
   if (id && id !== current?.id) load(id);
 });
 
+initBackground();
 buildNav();
 const initial = window.location.hash.replace(/^#\/?/, '');
 load(registry[initial] ? initial : Object.keys(registry)[0]);

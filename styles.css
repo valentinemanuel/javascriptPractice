@@ -14,6 +14,7 @@
   --probe: #bc8cff;
   --edge: #5b6b7c;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --panel-glass: rgba(21, 27, 35, 0.88);
 }
 
 html[data-theme="light"] {
@@ -27,10 +28,20 @@ html[data-theme="light"] {
   --accent: #0969da;
   --accent-soft: rgba(9, 105, 218, 0.12);
   --shadow: 0 10px 30px rgba(31, 35, 40, 0.1);
+  --panel-glass: rgba(255, 255, 255, 0.9);
 }
 
 * { box-sizing: border-box; }
 html, body { height: 100%; }
+
+#bg-canvas {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  display: block;
+}
+.topbar, .layout { position: relative; z-index: 1; }
 
 body {
   margin: 0;
@@ -85,7 +96,7 @@ button[disabled] { opacity: 0.45; cursor: not-allowed; }
 }
 
 .sidebar, .info-panel, .stage-panel {
-  background: var(--panel);
+  background: var(--panel-glass);
   border: 1px solid var(--border);
   border-radius: 12px;
   box-shadow: var(--shadow);
@@ -147,9 +158,7 @@ button[disabled] { opacity: 0.45; cursor: not-allowed; }
 .stage-wrap {
   flex: 1;
   min-height: 160px;
-  background:
-    radial-gradient(circle at center, var(--accent-soft) 0, transparent 62%),
-    var(--panel-2);
+  background: transparent;
   overflow: hidden;
 }
 #stage { display: block; width: 100%; height: 100%; touch-action: none; cursor: grab; }
