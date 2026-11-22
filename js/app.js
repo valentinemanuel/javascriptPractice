@@ -17,6 +17,7 @@ const structureCount = byId('structure-count');
 const complexityPanel = byId('complexity');
 const logList = byId('log');
 const fields = byId('fields');
+const controlsPanel = byId('controls');
 const playPause = byId('play-pause');
 const stepButton = byId('step');
 const resetButton = byId('reset');
@@ -56,7 +57,11 @@ const animator = new Animator({
 });
 
 function viewport() {
-  return { width: svg.clientWidth || 900, height: svg.clientHeight || 560 };
+  const dockHeight = controlsPanel?.getBoundingClientRect().height ?? 0;
+  return {
+    width: svg.clientWidth || 900,
+    height: Math.max(180, (svg.clientHeight || 560) - dockHeight - 16),
+  };
 }
 
 function applyTransform() {

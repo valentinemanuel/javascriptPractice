@@ -39,6 +39,7 @@ export function renderComplexity(container, meta, activeOperation = null, compac
   for (const [name, operation] of rows) {
     const row = document.createElement('tr');
     if (name === activeOperation) row.classList.add('is-active');
+    row.title = operation.description ?? '';
 
     const nameCell = document.createElement('th');
     nameCell.scope = 'row';
@@ -48,11 +49,11 @@ export function renderComplexity(container, meta, activeOperation = null, compac
     for (const column of COLUMNS) {
       const cell = document.createElement('td');
       const value = operation[column.key] ?? {};
-      const symbol = document.createElement('strong');
-      symbol.textContent = value.symbol ?? '—';
-      const note = document.createElement('small');
-      note.textContent = value.text ?? '';
-      cell.append(symbol, note);
+      const pill = document.createElement('span');
+      pill.className = 'complexity-pill';
+      pill.textContent = value.symbol ?? '—';
+      pill.title = `${column.label} case: ${value.text ?? ''}`;
+      cell.append(pill);
       row.append(cell);
     }
     body.append(row);

@@ -13,7 +13,9 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges, rounded edge badges and FRONT/BACK / HEAD/TAIL markers on linear structures.
 - Hash tables use textbook-style diagrams: an array of indexed slots, linked chains drawn with arrows, numbered probe trails and the computed `h(key)` shown above the table.
 - Persistent controls: the operation bar stays visible and the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
-- An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It sits behind the UI and never touches the structure SVG.
+- An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It never touches the structure SVG.
+- Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base.
+- Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
 - Hash table with four collision strategies, three hash functions and universal hashing.
 - Graph with directed/undirected and weighted/unweighted modes plus BFS, DFS and Dijkstra.
@@ -64,7 +66,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-262 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+267 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 
