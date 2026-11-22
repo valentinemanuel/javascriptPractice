@@ -8,6 +8,7 @@ import { computeFitTransform } from './core/fit.js';
 import { isPrimaryActionKey, isPlaybackShortcut, pickPrimaryOperation } from './core/shortcuts.js';
 import {
   readSidebarVisibility,
+  sidebarClasses,
   writeSidebarVisibility,
 } from './utils/sidebar.js';
 import {
@@ -51,6 +52,7 @@ const importFileInput = byId('import-json');
 const layout = document.querySelector('.layout');
 const toggleLeft = byId('toggle-left');
 const toggleRight = byId('toggle-right');
+const toggleCenter = byId('toggle-center');
 const jsonModal = byId('json-modal');
 const exportJsonText = byId('export-json-text');
 const importJsonText = byId('import-json-text');
@@ -77,29 +79,56 @@ let sidebarState = readSidebarVisibility(safeStorage());
 let refitTimer = null;
 
 function applySidebarState() {
-  layout.classList.toggle('left-collapsed', !sidebarState.left);
-  layout.classList.toggle('right-collapsed', !sidebarState.right);
+  layout.className = sidebarClasses(sidebarState);
   toggleLeft.setAttribute('aria-pressed', String(sidebarState.left));
   toggleRight.setAttribute('aria-pressed', String(sidebarState.right));
+  toggleCenter.setAttribute('aria-pressed', String(sidebarState.center));
+}
+
+function positionEdgeToggles() {
+  const layoutRect = layout.getBoundingClientRect();
+
+  if (window.matchMedia?.('(max-width: 820px)')?.matches) {
+    toggleLeft.style.left = '4px';
+    toggleRight.style.right = '4px';
+  } else {
+    const leftRect = layout.querySelector('.sidebar').getBoundingClientRect();
+    const rightRect = layout.querySelector('.info-panel').getBoundingClientRect();
+    toggleLeft.style.left = `${Math.max(4, leftRect.right - layoutRect.left - 13)}px`;
+    toggleRight.style.right = `${Math.max(4, layoutRect.right - rightRect.left - 13)}px`;
+  }
+
+  const stageRect = layout.querySelector('.stage-panel').getBoundingClientRect();
+  toggleCenter.style.left = stageRect.width === 0
+    ? ''
+    : `${stageRect.left - layoutRect.left + stageRect.width / 2}px`;
 }
 
 function scheduleRefit() {
   clearTimeout(refitTimer);
-  refitTimer = setTimeout(() => fitSceneToViewport(), 300);
+  refitTimer = setTimeout(() => {
+    positionEdgeToggles();
+    fitSceneToViewport();
+  }, 300);
 }
 
 function toggleSidebar(side) {
   sidebarState = { ...sidebarState, [side]: !sidebarState[side] };
   writeSidebarVisibility(safeStorage(), sidebarState);
+  toggleLeft.style.left = '';
+  toggleRight.style.right = '';
   applySidebarState();
+  if (window.matchMedia?.('(max-width: 820px)')?.matches) positionEdgeToggles();
   scheduleRefit();
 }
 
 toggleLeft.addEventListener('click', () => toggleSidebar('left'));
 toggleRight.addEventListener('click', () => toggleSidebar('right'));
+toggleCenter.addEventListener('click', () => toggleSidebar('center'));
 layout.addEventListener('transitionend', (event) => {
   if (event.target !== layout || event.propertyName !== 'grid-template-columns') return;
   clearTimeout(refitTimer);
+  positionEdgeToggles();
   fitSceneToViewport();
 });
 
@@ -737,6 +766,8 @@ function endDrag() {
 svg.addEventListener('pointerup', endDrag);
 svg.addEventListener('pointercancel', endDrag);
 
+window.addEventListener('resize', scheduleRefit);
+
 window.addEventListener('hashchange', () => {
   const id = window.location.hash.replace(/^#\/?/, '');
   if (id && id !== current?.id) load(id);
@@ -745,5 +776,6 @@ window.addEventListener('hashchange', () => {
 initBackground();
 buildNav();
 applySidebarState();
+positionEdgeToggles();
 const initial = window.location.hash.replace(/^#\/?/, '');
 load(registry[initial] ? initial : Object.keys(registry)[0]);
