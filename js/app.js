@@ -7,6 +7,10 @@ import { applyRandomData } from './ui/random-data.js';
 import { computeFitTransform } from './core/fit.js';
 import { isPrimaryActionKey, isPlaybackShortcut, pickPrimaryOperation } from './core/shortcuts.js';
 import {
+  readSidebarVisibility,
+  writeSidebarVisibility,
+} from './utils/sidebar.js';
+import {
   applySettings,
   createPayload,
   createStructure,
@@ -44,6 +48,9 @@ const clearLogButton = byId('clear-log');
 const exportPngButton = byId('export-png');
 const stageWrap = byId('stage-wrap');
 const importFileInput = byId('import-json');
+const layout = document.querySelector('.layout');
+const toggleLeft = byId('toggle-left');
+const toggleRight = byId('toggle-right');
 const jsonModal = byId('json-modal');
 const exportJsonText = byId('export-json-text');
 const importJsonText = byId('import-json-text');
@@ -57,6 +64,44 @@ let activeOperation = null;
 let primaryOperation = null;
 let stepCount = 0;
 let showAllComplexity = false;
+
+function safeStorage() {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+let sidebarState = readSidebarVisibility(safeStorage());
+let refitTimer = null;
+
+function applySidebarState() {
+  layout.classList.toggle('left-collapsed', !sidebarState.left);
+  layout.classList.toggle('right-collapsed', !sidebarState.right);
+  toggleLeft.setAttribute('aria-pressed', String(sidebarState.left));
+  toggleRight.setAttribute('aria-pressed', String(sidebarState.right));
+}
+
+function scheduleRefit() {
+  clearTimeout(refitTimer);
+  refitTimer = setTimeout(() => fitSceneToViewport(), 300);
+}
+
+function toggleSidebar(side) {
+  sidebarState = { ...sidebarState, [side]: !sidebarState[side] };
+  writeSidebarVisibility(safeStorage(), sidebarState);
+  applySidebarState();
+  scheduleRefit();
+}
+
+toggleLeft.addEventListener('click', () => toggleSidebar('left'));
+toggleRight.addEventListener('click', () => toggleSidebar('right'));
+layout.addEventListener('transitionend', (event) => {
+  if (event.target !== layout || event.propertyName !== 'grid-template-columns') return;
+  clearTimeout(refitTimer);
+  fitSceneToViewport();
+});
 
 function updateComplexity() {
   if (!current) return;
@@ -699,5 +744,6 @@ window.addEventListener('hashchange', () => {
 
 initBackground();
 buildNav();
+applySidebarState();
 const initial = window.location.hash.replace(/^#\/?/, '');
 load(registry[initial] ? initial : Object.keys(registry)[0]);

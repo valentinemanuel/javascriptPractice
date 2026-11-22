@@ -10,6 +10,12 @@
   </head>
   <body>
     <header class="topbar">
+      <button id="toggle-left" type="button" class="sidebar-toggle" title="Toggle left sidebar" aria-label="Toggle left sidebar" aria-pressed="true">
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <rect x="2.5" y="3" width="15" height="14" rx="2.5" />
+          <path d="M7.5 3v14" />
+        </svg>
+      </button>
       <div class="brand">
         <svg class="brand-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
           <rect class="brand-badge" x="0" y="0" width="32" height="32" rx="8" />
@@ -31,6 +37,12 @@
         </div>
       </div>
       <div class="top-actions">
+        <button id="toggle-right" type="button" class="sidebar-toggle" title="Toggle right sidebar" aria-label="Toggle right sidebar" aria-pressed="true">
+          <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+            <rect x="2.5" y="3" width="15" height="14" rx="2.5" />
+            <path d="M12.5 3v14" />
+          </svg>
+        </button>
         <button id="random-data" type="button" aria-label="Load random data into the current structure">⚄ Random data</button>
         <button id="clear-structure" type="button" aria-label="Clear all data from the current structure">
           <svg class="button-icon" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
@@ -44,9 +56,11 @@
 
     <main class="layout">
       <aside class="sidebar" aria-label="Structure list">
-        <h2>Structures <span id="structure-count" class="count-badge"></span></h2>
-        <p class="sidebar-hint">Pick a structure, then run an operation to watch it step by step.</p>
-        <nav id="structure-nav"></nav>
+        <div class="panel-inner">
+          <h2>Structures <span id="structure-count" class="count-badge"></span></h2>
+          <p class="sidebar-hint">Pick a structure, then run an operation to watch it step by step.</p>
+          <nav id="structure-nav"></nav>
+        </div>
       </aside>
 
       <section class="stage-panel">
@@ -110,16 +124,18 @@
       </section>
 
       <aside class="info-panel" aria-label="Details">
-        <div class="info-heading">
-          <h2>Complexity</h2>
-          <button id="complexity-toggle" type="button" aria-expanded="false">Show all</button>
+        <div class="panel-inner">
+          <div class="info-heading">
+            <h2>Complexity</h2>
+            <button id="complexity-toggle" type="button" aria-expanded="false">Show all</button>
+          </div>
+          <div id="complexity"></div>
+          <div class="info-heading log-heading">
+            <h2>Activity log</h2>
+            <button id="clear-log" type="button" aria-label="Clear the activity log">Clear</button>
+          </div>
+          <ol id="log" aria-live="polite"></ol>
         </div>
-        <div id="complexity"></div>
-        <div class="info-heading log-heading">
-          <h2>Activity log</h2>
-          <button id="clear-log" type="button" aria-label="Clear the activity log">Clear</button>
-        </div>
-        <ol id="log" aria-live="polite"></ol>
       </aside>
     </main>
 

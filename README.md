@@ -16,7 +16,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - Persistent controls: the operation bar stays visible and the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
 - An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It never touches the structure SVG.
 - A 56px glassmorphism header with a theme-aware three-node SVG badge, monospaced `12 Structures` / `Vanilla JS` badges, **Random data** and the theme toggle. Zoom controls (+ / − / Reset view) float over the viewer, and Reset view re-fits the structure automatically.
-- Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base.
+- Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base. The left and right sidebars collapse independently from header toggles, remember the preference in `localStorage` and re-fit the camera when the transition ends.
 - Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
 - Hash table with four collision strategies, three hash functions and universal hashing.
@@ -69,7 +69,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-318 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+322 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 
@@ -93,6 +93,7 @@ js/
     shortcuts.js      Keyboard shortcut helpers
   utils/
     io.js             Client-side PNG / JSON export and JSON import helpers
+    sidebar.js        Collapsible sidebar state helpers
   structures/         Pure data structure logic (one file per structure)
 tests/                node:test suites
 ```
