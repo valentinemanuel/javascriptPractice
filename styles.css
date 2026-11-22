@@ -222,28 +222,64 @@ button[disabled] { opacity: 0.45; cursor: not-allowed; }
 #log li.is-miss { border-color: var(--miss); }
 #log li.is-probe, #log li.is-collision { border-color: var(--probe); }
 
-.edge { stroke: var(--edge); stroke-width: 2; transition: stroke 0.2s ease; }
-.edge.is-focus { stroke: var(--accent); stroke-width: 3; }
-.arrow-path { fill: var(--edge); }
-.edge-label, .edge-weight, .index-label, .distance-label { fill: var(--muted); font-size: 11px; text-anchor: middle; }
+/* Shared SVG gradient stops */
+.grad-default-1 { stop-color: #33445a; }
+.grad-default-2 { stop-color: #151b23; }
+.grad-active-1 { stop-color: #79c0ff; }
+.grad-active-2 { stop-color: #1f5f9e; }
+.grad-found-1 { stop-color: #56d364; }
+.grad-found-2 { stop-color: #176b33; }
+html[data-theme="light"] .grad-default-1 { stop-color: #ffffff; }
+html[data-theme="light"] .grad-default-2 { stop-color: #d0d7de; }
+html[data-theme="light"] .grad-active-1 { stop-color: #b6d7ff; }
+html[data-theme="light"] .grad-active-2 { stop-color: #6cb6ff; }
+html[data-theme="light"] .grad-found-1 { stop-color: #b7ebc3; }
+html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
 
+/* Edges and markers */
+.edge, .edge-tree {
+  fill: none;
+  stroke: var(--edge);
+  stroke-width: 2;
+  stroke-linecap: round;
+  transition: stroke 0.25s ease, stroke-width 0.25s ease;
+}
+.edge.is-focus, .edge-tree.is-focus { stroke: var(--accent); stroke-width: 2.5; }
+.arrow-path { stroke: var(--edge); stroke-width: 1.6; }
+.edge-label rect { fill: var(--panel); stroke: var(--border); stroke-width: 1; }
+.edge-label-text { fill: var(--text); font-size: 11px; font-weight: 600; text-anchor: middle; }
+.index-label, .distance-label { fill: var(--muted); font-size: 11px; text-anchor: middle; }
+
+/* Nodes: subtle 3D volume with shared gradients */
+.node, .node circle, .node rect {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.25s ease, fill 0.25s ease, stroke 0.25s ease;
+}
 .node circle, .node rect, .bucket rect {
-  fill: var(--panel-2);
+  fill: url(#node-grad-default);
   stroke: var(--accent);
   stroke-width: 2;
-  transition: fill 0.2s ease, stroke 0.2s ease;
 }
 .node text { fill: var(--text); font-size: 14px; text-anchor: middle; pointer-events: none; }
 .node .key-divider { stroke: var(--border); stroke-width: 1; }
-.node .terminal-ring { fill: none; stroke-width: 2; stroke-dasharray: 3 3; }
-.node.is-focus circle, .node.is-focus rect, .bucket.is-focus rect { fill: var(--accent-soft); }
-.node.is-compare circle, .node.is-compare rect { stroke: var(--compare); fill: rgba(242, 204, 96, 0.18); }
-.node.is-visit circle, .node.is-visit rect { fill: var(--accent-soft); }
-.node.is-found circle, .node.is-found rect { stroke: var(--found); fill: rgba(63, 185, 80, 0.22); }
-.node.is-miss circle, .node.is-miss rect { stroke: var(--miss); fill: rgba(248, 81, 73, 0.18); }
-.node.is-probe circle, .node.is-probe rect, .node.is-collision circle,
-.node.is-collision rect, .bucket.is-collision rect { stroke: var(--probe); fill: rgba(188, 140, 255, 0.18); }
-.node.is-rotate circle, .node.is-rotate rect { stroke: var(--compare); fill: rgba(242, 204, 96, 0.2); }
+
+.node.is-terminal .terminal-ring { fill: none; stroke: var(--found); stroke-width: 1.5; }
+.node.is-terminal .terminal-ring-outer { stroke-width: 1; opacity: 0.7; }
+
+.node.is-focus circle:not(.terminal-ring), .node.is-focus rect,
+.node.is-visiting circle:not(.terminal-ring), .node.is-visiting rect,
+.bucket.is-focus rect {
+  fill: url(#node-grad-active);
+  filter: url(#glow);
+}
+.node.is-compare circle:not(.terminal-ring), .node.is-compare rect { stroke: var(--compare); fill: rgba(242, 204, 96, 0.2); }
+.node.is-found circle:not(.terminal-ring), .node.is-found rect { stroke: var(--found); fill: url(#node-grad-found); }
+.node.is-miss circle:not(.terminal-ring), .node.is-miss rect { stroke: var(--miss); fill: rgba(248, 81, 73, 0.18); }
+.node.is-probe circle:not(.terminal-ring), .node.is-probe rect, .node.is-collision circle:not(.terminal-ring),
+.node.is-collision rect, .bucket.is-collision rect { stroke: var(--probe); fill: rgba(188, 140, 255, 0.2); }
+.node.is-rotate circle:not(.terminal-ring), .node.is-rotate rect { stroke: var(--compare); fill: rgba(242, 204, 96, 0.2); }
+.node.is-pointer circle:not(.terminal-ring), .node.is-pointer rect { stroke: var(--accent); stroke-dasharray: 4 3; }
 .node.is-tombstone circle { stroke: var(--miss); fill: transparent; stroke-dasharray: 4 3; }
 .node.is-tombstone text { fill: var(--miss); }
 
@@ -251,11 +287,16 @@ button[disabled] { opacity: 0.45; cursor: not-allowed; }
 .pointer-label.is-front { fill: var(--found); }
 .pointer-label.is-back { fill: var(--probe); }
 
-.hash-slot rect { fill: var(--panel-2); stroke: var(--accent); stroke-width: 2; }
-.hash-slot.is-focus rect { fill: var(--accent-soft); }
-.hash-slot.is-probe rect, .hash-slot.is-collision rect { stroke: var(--probe); fill: rgba(188, 140, 255, 0.18); }
-.hash-slot.is-found rect { stroke: var(--found); fill: rgba(63, 185, 80, 0.2); }
-.hash-index { fill: var(--muted); font-size: 10px; text-anchor: middle; }
+/* Hash table: index tab separated from the data container */
+.hash-slot rect, .hash-index-badge rect {
+  transition: transform 0.25s ease, fill 0.25s ease, stroke 0.25s ease;
+}
+.hash-slot rect { fill: url(#node-grad-default); stroke: var(--accent); stroke-width: 2; }
+.hash-slot.is-focus rect { fill: url(#node-grad-active); filter: url(#glow); }
+.hash-slot.is-probe rect, .hash-slot.is-collision rect { stroke: var(--probe); fill: rgba(188, 140, 255, 0.2); }
+.hash-slot.is-found rect { stroke: var(--found); fill: url(#node-grad-found); }
+.hash-index-badge rect { fill: var(--panel); stroke: var(--border); stroke-width: 1; }
+.hash-index { fill: var(--muted); font-size: 10px; font-weight: 600; text-anchor: middle; }
 .hash-value { fill: var(--text); font-size: 16px; font-weight: 600; text-anchor: middle; }
 .hash-hash-badge { fill: var(--accent); font-size: 13px; font-weight: 600; }
 .hash-hash-sub { fill: var(--muted); font-size: 11px; }

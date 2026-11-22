@@ -10,7 +10,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 
 - 12 structures, each with its own operation toolbar and complexity table.
 - Step-by-step playback: play, pause, single step, speed control and reset.
-- Generic SVG renderer with node highlighting, zoom and pan, plus FRONT/BACK and HEAD/TAIL markers on linear structures.
+- Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges, rounded edge badges and FRONT/BACK / HEAD/TAIL markers on linear structures.
 - Hash tables use textbook-style diagrams: an array of indexed slots, linked chains drawn with arrows, numbered probe trails and the computed `h(key)` shown above the table.
 - Persistent controls: the operation bar stays visible and the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
@@ -63,7 +63,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-250 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+256 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

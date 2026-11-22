@@ -11,7 +11,7 @@ const HIGHLIGHT_CLASS = {
   delete: 'is-focus',
   remove: 'is-focus',
   access: 'is-focus',
-  visit: 'is-visit',
+  visit: 'is-visiting',
   compare: 'is-compare',
   found: 'is-found',
   miss: 'is-miss',
@@ -35,25 +35,71 @@ function element(name, attributes = {}, text) {
   return node;
 }
 
+function radialGradient(id, firstClass, secondClass) {
+  const gradient = element('radialGradient', { id, cx: '35%', cy: '30%', r: '75%' });
+  gradient.append(
+    element('stop', { offset: '0%', class: firstClass }),
+    element('stop', { offset: '100%', class: secondClass }),
+  );
+  return gradient;
+}
+
+function arrowMarker(id) {
+  const marker = element('marker', {
+    id,
+    viewBox: '0 0 10 10',
+    refX: '9',
+    refY: '5',
+    markerWidth: '6',
+    markerHeight: '6',
+    markerUnits: 'userSpaceOnUse',
+    orient: 'auto-start-reverse',
+  });
+  marker.append(element('path', {
+    d: 'M 1.5 1 Q 8 5 1.5 9',
+    class: 'arrow-path',
+    fill: 'none',
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+  }));
+  return marker;
+}
+
 function ensureDefs(svg) {
   let defs = svg.querySelector('defs');
   if (!defs) {
     defs = element('defs');
     svg.prepend(defs);
   }
-  if (!defs.querySelector('#arrowhead')) {
-    const marker = element('marker', {
-      id: 'arrowhead',
-      viewBox: '0 0 10 10',
-      refX: '9',
-      refY: '5',
-      markerWidth: '7',
-      markerHeight: '7',
-      orient: 'auto-start-reverse',
-    });
-    marker.append(element('path', { d: 'M 0 0 L 10 5 L 0 10 z', class: 'arrow-path' }));
-    defs.append(marker);
-  }
+  if (defs.querySelector('#node-grad-default')) return defs;
+
+  defs.append(
+    radialGradient('node-grad-default', 'grad-default-1', 'grad-default-2'),
+    radialGradient('node-grad-active', 'grad-active-1', 'grad-active-2'),
+    radialGradient('node-grad-found', 'grad-found-1', 'grad-found-2'),
+  );
+
+  const filter = element('filter', {
+    id: 'glow',
+    x: '-60%',
+    y: '-60%',
+    width: '220%',
+    height: '220%',
+  });
+  filter.append(element('feGaussianBlur', {
+    in: 'SourceGraphic',
+    stdDeviation: '4',
+    result: 'blur',
+  }));
+  const merge = element('feMerge');
+  merge.append(
+    element('feMergeNode', { in: 'blur' }),
+    element('feMergeNode', { in: 'SourceGraphic' }),
+  );
+  filter.append(merge);
+  defs.append(filter);
+
+  defs.append(arrowMarker('arrowhead'), arrowMarker('arrowhead-active'));
   return defs;
 }
 
@@ -70,41 +116,64 @@ function labelFor(node) {
   return node.id;
 }
 
-function drawEdge(edge, positions, focus) {
+function drawEdgeBadge(group, x, y, value) {
+  const text = String(value);
+  const width = Math.max(24, text.length * 9 + 14);
+  const badge = element('g', { class: 'edge-label' });
+  badge.append(element('rect', {
+    x: x - width / 2,
+    y: y - 11,
+    width,
+    height: 22,
+    rx: '6',
+  }));
+  badge.append(element('text', { x, y: y + 4, class: 'edge-label-text' }, text));
+  group.append(badge);
+}
+
+function drawEdge(edge, positions, focus, treeEdge = false) {
   const from = positions.get(edge.from);
   const to = positions.get(edge.to);
   if (!from || !to) return null;
 
+  const highlighted = focus.has(edge.from) || focus.has(edge.to);
+  const marker = highlighted ? 'url(#arrowhead-active)' : 'url(#arrowhead)';
   const group = element('g', { class: 'edge-group' });
-  group.append(element('line', {
-    x1: from.x,
-    y1: from.y,
-    x2: to.x,
-    y2: to.y,
-    class: `edge${focus.has(edge.from) || focus.has(edge.to) ? ' is-focus' : ''}`,
-    'marker-end': edge.directed || edge.side ? 'url(#arrowhead)' : undefined,
-  }));
 
-  if (edge.label !== undefined) {
-    group.append(element('text', {
-      x: (from.x + to.x) / 2,
-      y: (from.y + to.y) / 2 - 8,
-      class: 'edge-label',
-    }, edge.label));
+  if (treeEdge) {
+    const midY = (from.y + to.y) / 2;
+    group.append(element('path', {
+      d: `M ${from.x} ${from.y} C ${from.x} ${midY}, ${to.x} ${midY}, ${to.x} ${to.y}`,
+      class: `edge edge-tree${highlighted ? ' is-focus' : ''}`,
+      'marker-end': edge.directed || edge.side ? marker : undefined,
+    }));
+  } else {
+    group.append(element('line', {
+      x1: from.x,
+      y1: from.y,
+      x2: to.x,
+      y2: to.y,
+      class: `edge${highlighted ? ' is-focus' : ''}`,
+      'marker-end': edge.directed ? marker : undefined,
+    }));
   }
-  if (edge.weight !== undefined) {
-    group.append(element('text', {
-      x: (from.x + to.x) / 2,
-      y: (from.y + to.y) / 2 + 16,
-      class: 'edge-weight',
-    }, edge.weight));
+
+  const badgeText = edge.label ?? edge.weight;
+  if (badgeText !== undefined) {
+    drawEdgeBadge(group, (from.x + to.x) / 2, (from.y + to.y) / 2, badgeText);
   }
   return group;
 }
 
-function drawNode(node, position, focusClass) {
+function drawNode(node, position, focusClass, isPointer = false) {
+  const classes = ['node'];
+  if (focusClass) classes.push(focusClass);
+  if (node.terminal) classes.push('is-terminal');
+  if (isPointer) classes.push('is-pointer');
+  if (node.tombstone) classes.push('is-tombstone');
+
   const group = element('g', {
-    class: `node${focusClass ? ` ${focusClass}` : ''}${node.tombstone ? ' is-tombstone' : ''}`,
+    class: classes.join(' '),
     'data-id': node.id,
     'aria-label': `${node.tombstone ? 'deleted slot' : labelFor(node)}${node.dist !== undefined ? `, distance ${node.dist}` : ''}`,
     tabindex: '0',
@@ -147,11 +216,18 @@ function drawNode(node, position, focusClass) {
   }
 
   if (node.terminal) {
+    const radius = position.radius ?? 23;
     group.append(element('circle', {
       cx: position.x,
       cy: position.y,
-      r: (position.radius ?? 23) + 6,
+      r: radius + 5,
       class: 'terminal-ring',
+    }));
+    group.append(element('circle', {
+      cx: position.x,
+      cy: position.y,
+      r: radius + 9,
+      class: 'terminal-ring terminal-ring-outer',
     }));
   }
 
@@ -239,13 +315,23 @@ function drawHash(scene, state, positions, step, focus, focusClass) {
       y: position.y - position.height / 2,
       width: position.width,
       height: position.height,
-      rx: '7',
+      rx: '6',
     }));
-    group.append(element('text', {
+
+    const indexBadge = element('g', { class: 'hash-index-badge' });
+    indexBadge.append(element('rect', {
+      x: position.x - 18,
+      y: position.y - position.height / 2 - 28,
+      width: 36,
+      height: 18,
+      rx: '5',
+    }));
+    indexBadge.append(element('text', {
       x: position.x,
-      y: position.y - position.height / 2 - 9,
+      y: position.y - position.height / 2 - 15,
       class: 'hash-index',
     }, `[${bucket.id.replace('bucket-', '')}]`));
+    group.append(indexBadge);
 
     if (!chaining) {
       const item = bucket.items?.[0];
@@ -331,15 +417,21 @@ export function render(svg, state, positions = new Map(), step = {}) {
     return;
   }
 
+  const treeEdges = Object.prototype.hasOwnProperty.call(state, 'root');
+  const pointerIds = new Set(
+    [state.top, state.head, state.tail].filter((id) => id !== null && id !== undefined),
+  );
+
   for (const edge of state.edges ?? []) {
-    const drawn = drawEdge(edge, positions, focus);
+    const drawn = drawEdge(edge, positions, focus, treeEdges);
     if (drawn) scene.append(drawn);
   }
 
   for (const node of nodeList(state)) {
     const position = positions.get(node.id);
     if (!position) continue;
-    scene.append(drawNode(node, position, focus.has(node.id) ? focusClass : ''));
+    const className = focus.has(node.id) ? focusClass : '';
+    scene.append(drawNode(node, position, className, pointerIds.has(node.id)));
     if (position.index !== undefined) {
       scene.append(element('text', {
         x: position.x,
