@@ -115,9 +115,13 @@ function readFields(operation) {
   for (const descriptor of operation.fields ?? []) {
     const input = fields.querySelector(`[data-name="${descriptor.name}"]`);
     const raw = input?.value ?? '';
-    if (descriptor.required !== false && raw.trim() === '') {
-      appendLog(`Enter a value for ${descriptor.label ?? descriptor.name} first.`, 'miss');
-      return null;
+    if (raw.trim() === '') {
+      if (descriptor.required !== false) {
+        appendLog(`Enter a value for ${descriptor.label ?? descriptor.name} first.`, 'miss');
+        return null;
+      }
+      values.push('');
+      continue;
     }
     values.push(parseField(raw, descriptor.type));
   }
