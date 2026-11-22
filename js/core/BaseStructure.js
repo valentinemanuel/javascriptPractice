@@ -33,6 +33,31 @@ export class BaseStructure {
     return this.reset();
   }
 
+  /** Replaces the canonical state with a previously exported one. */
+  restore(state) {
+    this.state = JSON.parse(JSON.stringify(state));
+    this._resetIds();
+    this._reserveIds(this.state);
+    return this;
+  }
+
+  _reserveIds(value) {
+    let highest = 0;
+    const visit = (item) => {
+      if (Array.isArray(item)) {
+        item.forEach(visit);
+      } else if (item && typeof item === 'object') {
+        if (typeof item.id === 'string') {
+          const match = item.id.match(/\d+$/);
+          if (match) highest = Math.max(highest, Number(match[0]));
+        }
+        Object.values(item).forEach(visit);
+      }
+    };
+    visit(value);
+    this._idCounter = Math.max(this._idCounter, highest);
+  }
+
   _resetIds() {
     this._idCounter = 0;
   }

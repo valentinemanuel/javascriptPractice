@@ -69,6 +69,21 @@ export class BPlusTree extends BaseStructure {
     return super.reset(values);
   }
 
+  restore(state) {
+    super.restore(state);
+    this._order = Number(this.state.order) || 4;
+    this._children = new Map();
+    for (const node of this.state.nodes) {
+      if (node.leaf) continue;
+      const children = this.state.edges
+        .filter((edge) => edge.from === node.id)
+        .sort((a, b) => a.index - b.index)
+        .map((edge) => edge.to);
+      this._children.set(node.id, children);
+    }
+    return this;
+  }
+
   seed(values = []) {
     for (const key of values) {
       // Reuse the insert generator; consuming it performs the mutations.

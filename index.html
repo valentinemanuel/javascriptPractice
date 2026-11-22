@@ -61,9 +61,14 @@
           <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
           <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
           <button id="reset-zoom" type="button" aria-label="Reset zoom and pan">Reset view</button>
+          <span class="tool-separator" aria-hidden="true"></span>
+          <button id="export-png" type="button" title="Export PNG" aria-label="Export PNG" class="tool-button">⇩ <span>PNG</span></button>
+          <button id="export-json" type="button" title="Export JSON" aria-label="Export JSON" class="tool-button">⇩ <span>JSON</span></button>
+          <button id="import-json-button" type="button" title="Import JSON" aria-label="Import JSON" class="tool-button">⇧ <span>JSON</span></button>
+          <input id="import-json" type="file" accept=".json,application/json" hidden>
         </div>
 
-        <div class="stage-wrap">
+        <div id="stage-wrap" class="stage-wrap">
           <svg id="stage" role="img" aria-label="Data structure visualization"></svg>
           <div class="state-legend" aria-label="Node state colors">
             <span><i class="legend-dot is-visiting"></i>Visiting</span>

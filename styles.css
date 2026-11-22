@@ -14,6 +14,12 @@
   --found: #3fb950;
   --miss: #f85149;
   --probe: #bc8cff;
+  --grad-default-1: #33445a;
+  --grad-default-2: #151b23;
+  --grad-active-1: #79c0ff;
+  --grad-active-2: #1f5f9e;
+  --grad-found-1: #56d364;
+  --grad-found-2: #176b33;
   --edge: #5b6b7c;
   --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
   --panel-glass: rgba(15, 23, 42, 0.72);
@@ -33,6 +39,12 @@ html[data-theme="light"] {
   --accent-soft: rgba(9, 105, 218, 0.12);
   --shadow: 0 10px 30px rgba(31, 35, 40, 0.1);
   --panel-glass: rgba(255, 255, 255, 0.72);
+  --grad-default-1: #ffffff;
+  --grad-default-2: #d0d7de;
+  --grad-active-1: #b6d7ff;
+  --grad-active-2: #6cb6ff;
+  --grad-found-1: #b7ebc3;
+  --grad-found-2: #3fb950;
 }
 
 * { box-sizing: border-box; }
@@ -194,6 +206,9 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   box-shadow: var(--shadow);
 }
 .viewer-tools button { padding: 4px 8px; font-size: 12px; line-height: 1.2; min-width: 28px; }
+.viewer-tools .tool-button { padding: 4px 6px; font-size: 11px; }
+.viewer-tools .tool-button span { font-weight: 600; }
+.tool-separator { width: 1px; align-self: stretch; background: var(--border); margin: 2px 2px; }
 .stage-header {
   padding: 13px 17px 11px;
   border: 1px solid var(--border);
@@ -223,6 +238,11 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   min-height: 160px;
   background: transparent;
   overflow: hidden;
+}
+.stage-wrap.is-dropping {
+  outline: 2px dashed var(--accent);
+  outline-offset: -5px;
+  background: var(--accent-soft);
 }
 .state-legend {
   position: absolute;
@@ -382,18 +402,12 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
 #log li.is-probe, #log li.is-collision { border-color: var(--probe); }
 
 /* Shared SVG gradient stops */
-.grad-default-1 { stop-color: #33445a; }
-.grad-default-2 { stop-color: #151b23; }
-.grad-active-1 { stop-color: #79c0ff; }
-.grad-active-2 { stop-color: #1f5f9e; }
-.grad-found-1 { stop-color: #56d364; }
-.grad-found-2 { stop-color: #176b33; }
-html[data-theme="light"] .grad-default-1 { stop-color: #ffffff; }
-html[data-theme="light"] .grad-default-2 { stop-color: #d0d7de; }
-html[data-theme="light"] .grad-active-1 { stop-color: #b6d7ff; }
-html[data-theme="light"] .grad-active-2 { stop-color: #6cb6ff; }
-html[data-theme="light"] .grad-found-1 { stop-color: #b7ebc3; }
-html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
+.grad-default-1 { stop-color: var(--grad-default-1); }
+.grad-default-2 { stop-color: var(--grad-default-2); }
+.grad-active-1 { stop-color: var(--grad-active-1); }
+.grad-active-2 { stop-color: var(--grad-active-2); }
+.grad-found-1 { stop-color: var(--grad-found-1); }
+.grad-found-2 { stop-color: var(--grad-found-2); }
 
 /* Edges and markers */
 .edge, .edge-tree {

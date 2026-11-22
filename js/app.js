@@ -6,6 +6,15 @@ import { initBackground } from './ui/background.js';
 import { applyRandomData } from './ui/random-data.js';
 import { computeFitTransform } from './core/fit.js';
 import { isPrimaryActionKey, isPlaybackShortcut, pickPrimaryOperation } from './core/shortcuts.js';
+import {
+  applySettings,
+  createPayload,
+  downloadJson,
+  exportSvgPng,
+  parsePayload,
+  readJsonFile,
+  themeVariables,
+} from './utils/io.js';
 
 const byId = (id) => document.getElementById(id);
 const svg = byId('stage');
@@ -30,6 +39,8 @@ const speedInput = byId('speed');
 const speedValue = byId('speed-value');
 const clearStructureButton = byId('clear-structure');
 const clearLogButton = byId('clear-log');
+const stageWrap = byId('stage-wrap');
+const importFileInput = byId('import-json');
 
 let current = null;
 let activeOperation = null;
@@ -399,6 +410,82 @@ clearStructureButton.addEventListener('click', () => {
 });
 
 clearLogButton.addEventListener('click', () => clearLog());
+
+byId('export-png').addEventListener('click', async () => {
+  if (!current) return;
+  try {
+    const variables = themeVariables();
+    await exportSvgPng(svg, current.id, {
+      variables,
+      background: variables['--bg'] ?? '#0d1117',
+    });
+    appendLog(`Exported ${current.structure.meta.title} as a PNG image.`, 'info');
+  } catch (error) {
+    appendLog(`PNG export failed: ${error.message ?? error}`, 'miss');
+  }
+});
+
+byId('export-json').addEventListener('click', () => {
+  if (!current) return;
+  downloadJson(createPayload(current.id, current.structure.getState()), current.id);
+  appendLog(`Exported ${current.structure.meta.title} state as JSON.`, 'info');
+});
+
+byId('import-json-button').addEventListener('click', () => importFileInput.click());
+
+importFileInput.addEventListener('change', async (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  await importStateFile(file);
+});
+
+async function importStateFile(file) {
+  if (!file) return;
+  try {
+    const result = parsePayload(await readJsonFile(file), Object.keys(registry));
+    if (!result.ok) {
+      appendLog(`Import failed: ${result.error}`, 'miss');
+      return;
+    }
+
+    const { payload } = result;
+    load(payload.structure);
+    applySettings(current.structure, payload.structure, payload.settings ?? {});
+    current.structure.restore(payload.data);
+    activeOperation = null;
+    stepCount = 0;
+    updateComplexity();
+    clearLog();
+    appendLog(`Loaded ${current.structure.meta.title} from JSON.`, 'info');
+    draw();
+    fitSceneToViewport();
+  } catch (error) {
+    appendLog(`Import failed: ${error.message ?? error}`, 'miss');
+  }
+}
+
+stageWrap.addEventListener('dragenter', (event) => {
+  event.preventDefault();
+  stageWrap.classList.add('is-dropping');
+});
+stageWrap.addEventListener('dragover', (event) => {
+  event.preventDefault();
+  stageWrap.classList.add('is-dropping');
+});
+stageWrap.addEventListener('dragleave', (event) => {
+  if (!stageWrap.contains(event.relatedTarget)) stageWrap.classList.remove('is-dropping');
+});
+stageWrap.addEventListener('drop', (event) => {
+  event.preventDefault();
+  stageWrap.classList.remove('is-dropping');
+  const files = [...(event.dataTransfer?.files ?? [])];
+  const file = files.find((item) => item.name.toLowerCase().endsWith('.json'));
+  if (!file) {
+    appendLog('Import failed: drop a .json file over the viewer.', 'miss');
+    return;
+  }
+  importStateFile(file);
+});
 
 byId('theme-toggle').addEventListener('click', (event) => {
   const root = document.documentElement;

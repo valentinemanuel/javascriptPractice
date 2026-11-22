@@ -214,6 +214,18 @@ export class Graph extends BaseStructure {
     return this;
   }
 
+  restore(state) {
+    super.restore(state);
+    this._labelIndex = new Map();
+    this._idIndex = new Map();
+    this.state.pinned = this.state.pinned ?? {};
+    for (const node of this.state.nodes) {
+      this._labelIndex.set(node.value, node.id);
+      this._idIndex.set(node.id, node);
+    }
+    return this;
+  }
+
   seed(_values = []) {
     this._resetIds();
     this.state = this.initialState();
