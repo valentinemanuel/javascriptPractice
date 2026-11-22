@@ -1,0 +1,11 @@
+{
+  "name": "estructura",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Interactive data structure visualizer built with vanilla JavaScript",
+  "scripts": {
+    "test": "node --test",
+    "start": "python -m http.server 8080"
+  }
+}
