@@ -1,6 +1,6 @@
 # StructLab
 
-**Live demo:** https://valentinemanuel.github.io/javascriptPractice/
+**Live demo:** https://valentinemanuel.github.io/structlab/
 
 An interactive data structure visualizer built with **HTML, CSS and vanilla JavaScript** — no frameworks, no runtime dependencies, no build step.
 

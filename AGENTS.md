@@ -1,6 +1,6 @@
 # Project instructions
 
-`estructura` — an interactive data structure visualizer built with HTML, CSS and
+`structlab` — an interactive data structure visualizer built with HTML, CSS and
 vanilla JavaScript ES modules.
 
 ## Hard constraints
