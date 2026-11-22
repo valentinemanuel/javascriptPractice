@@ -17,11 +17,13 @@ const HIGHLIGHT_CLASS = {
   miss: 'is-miss',
   collision: 'is-collision',
   probe: 'is-probe',
+  hash: 'is-probe',
   rotate: 'is-rotate',
   split: 'is-rotate',
   merge: 'is-rotate',
   enqueue: 'is-focus',
   dequeue: 'is-focus',
+  relax: 'is-focus',
 };
 
 function element(name, attributes = {}, text) {
@@ -74,15 +76,14 @@ function drawEdge(edge, positions, focus) {
   if (!from || !to) return null;
 
   const group = element('g', { class: 'edge-group' });
-  const line = element('line', {
+  group.append(element('line', {
     x1: from.x,
     y1: from.y,
     x2: to.x,
     y2: to.y,
     class: `edge${focus.has(edge.from) || focus.has(edge.to) ? ' is-focus' : ''}`,
     'marker-end': edge.directed || edge.side ? 'url(#arrowhead)' : undefined,
-  });
-  group.append(line);
+  }));
 
   if (edge.label !== undefined) {
     group.append(element('text', {
@@ -157,7 +158,7 @@ function drawNode(node, position, focusClass) {
   if (node.dist !== undefined) {
     group.append(element('text', {
       x: position.x,
-      y: position.y + (position.height ?? 46) / 2 + 18,
+      y: position.y + height / 2 + 18,
       class: 'distance-label',
     }, `d=${node.dist}`));
   }
@@ -165,13 +166,143 @@ function drawNode(node, position, focusClass) {
   return group;
 }
 
-function drawIndex(position) {
-  if (position.index === undefined) return null;
-  return element('text', {
-    x: position.x,
-    y: position.y + 46,
-    class: 'index-label',
-  }, `[${position.index}]`);
+function drawPointerLabels(scene, state, positions) {
+  const marks = [];
+  if (state.top !== null && state.top !== undefined) {
+    marks.push([state.top, state.topLabel ?? 'TOP', 'is-front']);
+  }
+  if (state.head !== null && state.head !== undefined
+    && state.tail !== null && state.tail !== undefined) {
+    const headText = state.headLabel ?? 'HEAD';
+    const tailText = state.tailLabel ?? 'TAIL';
+    if (state.head === state.tail) {
+      marks.push([state.head, `${headText} / ${tailText}`, 'is-front']);
+    } else {
+      marks.push([state.head, headText, 'is-front']);
+      marks.push([state.tail, tailText, 'is-back']);
+    }
+  }
+
+  for (const [id, text, className] of marks) {
+    const position = positions.get(id);
+    if (!position) continue;
+    scene.append(element('text', {
+      x: position.x,
+      y: position.y - (position.radius ?? 30) - 16,
+      class: `pointer-label ${className}`,
+    }, text));
+  }
+}
+
+function drawHash(scene, state, positions, step, focus, focusClass) {
+  const buckets = state.buckets ?? [];
+  if (buckets.length === 0) return;
+
+  const placed = buckets.map((bucket) => positions.get(bucket.id)).filter(Boolean);
+  if (placed.length === 0) return;
+  const minX = Math.min(...placed.map((p) => p.x));
+  const maxX = Math.max(...placed.map((p) => p.x));
+  const chaining = state.strategy === 'chaining';
+
+  scene.append(element('text', { x: minX - 40, y: 24, class: 'hash-hash-badge' },
+    `${chaining ? 'Separate chaining' : 'Open addressing'} · hash: ${state.hash}`));
+
+  const payload = step.payload ?? {};
+  const firstProbe = Array.isArray(payload.probe) ? payload.probe[0] : undefined;
+  const homeIndex = step.type === 'hash'
+    ? payload.index
+    : firstProbe !== undefined
+      ? Number(String(firstProbe).replace('bucket-', ''))
+      : undefined;
+  if (payload.key !== undefined && Number.isFinite(homeIndex)) {
+    let detail = `h(${payload.key}) = ${homeIndex}`;
+    if (step.type === 'hash' && state.hash === 'universal') {
+      detail += `   a=${payload.a}  b=${payload.b}  p=${payload.p}`;
+    } else if (step.type === 'hash' && state.hash === 'multiplication') {
+      detail += `   A≈${Number(payload.a).toFixed(3)}`;
+    }
+    scene.append(element('text', { x: minX - 40, y: 46, class: 'hash-hash-sub' }, detail));
+  }
+  if (step.type === 'rehash' && payload.from !== undefined) {
+    scene.append(element('text', { x: maxX + 46, y: 24, class: 'hash-hash-badge' },
+      `Rehash ${payload.from} → ${payload.to}`));
+  }
+
+  for (const bucket of buckets) {
+    const position = positions.get(bucket.id);
+    if (!position) continue;
+    const className = focus.has(bucket.id) ? ` ${focusClass}` : '';
+    const group = element('g', { class: `hash-slot${className}`, 'data-id': bucket.id });
+
+    group.append(element('rect', {
+      x: position.x - position.width / 2,
+      y: position.y - position.height / 2,
+      width: position.width,
+      height: position.height,
+      rx: '7',
+    }));
+    group.append(element('text', {
+      x: position.x,
+      y: position.y - position.height / 2 - 9,
+      class: 'hash-index',
+    }, `[${bucket.id.replace('bucket-', '')}]`));
+
+    if (!chaining) {
+      const item = bucket.items?.[0];
+      group.append(element('text', {
+        x: position.x,
+        y: position.y + 6,
+        class: `hash-value${item?.tombstone ? ' is-tombstone' : ''}`,
+      }, item ? (item.tombstone ? '×' : String(item.value)) : '—'));
+    } else if ((bucket.items?.length ?? 0) === 0) {
+      group.append(element('text', { x: position.x, y: position.y + 5, class: 'hash-index' }, 'empty'));
+    }
+    scene.append(group);
+
+    const items = bucket.items ?? [];
+    if (chaining && items.length > 0) {
+      let previous = { x: position.x + position.width / 2, y: position.y };
+      items.forEach((item) => {
+        const itemPosition = positions.get(item.id);
+        if (!itemPosition) return;
+        scene.append(element('line', {
+          x1: previous.x,
+          y1: previous.y,
+          x2: itemPosition.x - 20,
+          y2: itemPosition.y,
+          class: 'hash-chain-line',
+          'marker-end': 'url(#arrowhead)',
+        }));
+        scene.append(drawNode(item, itemPosition, focus.has(item.id) ? focusClass : ''));
+        previous = { x: itemPosition.x + 20, y: itemPosition.y };
+      });
+    }
+  }
+
+  const probe = payload.probe ?? [];
+  const badges = probe.map((id) => positions.get(id)).filter(Boolean);
+  badges.forEach((position, index) => {
+    if (index > 0) {
+      scene.append(element('line', {
+        x1: badges[index - 1].x + 46,
+        y1: badges[index - 1].y - 34,
+        x2: position.x + 46,
+        y2: position.y - 34,
+        class: 'hash-probe-line',
+      }));
+    }
+    scene.append(element('circle', {
+      cx: position.x + 46,
+      cy: position.y - 34,
+      r: 11,
+      class: 'hash-probe-badge-circle',
+    }));
+    scene.append(element('text', {
+      x: position.x + 46,
+      y: position.y - 30,
+      class: 'hash-probe-badge',
+    }, index + 1));
+  });
 }
 
 export function render(svg, state, positions = new Map(), step = {}) {
@@ -195,38 +326,28 @@ export function render(svg, state, positions = new Map(), step = {}) {
   ]);
   const focusClass = HIGHLIGHT_CLASS[step.type] ?? 'is-focus';
 
+  if (Array.isArray(state.buckets)) {
+    drawHash(scene, state, positions, step, focus, focusClass);
+    return;
+  }
+
   for (const edge of state.edges ?? []) {
     const drawn = drawEdge(edge, positions, focus);
     if (drawn) scene.append(drawn);
-  }
-
-  const bucketClass = HIGHLIGHT_CLASS[step.type] ?? 'is-focus';
-  for (const bucket of state.buckets ?? []) {
-    const position = positions.get(bucket.id);
-    if (!position) continue;
-    const group = element('g', { class: `bucket${focus.has(bucket.id) ? ` ${bucketClass}` : ''}`, 'data-id': bucket.id });
-    group.append(element('rect', {
-      x: position.x - 34,
-      y: position.y - 26,
-      width: 68,
-      height: 52,
-      rx: '6',
-    }));
-    group.append(element('text', { x: position.x, y: position.y + 6, class: 'node-label' }, bucket.id.replace('bucket-', '')));
-    scene.append(group);
   }
 
   for (const node of nodeList(state)) {
     const position = positions.get(node.id);
     if (!position) continue;
     scene.append(drawNode(node, position, focus.has(node.id) ? focusClass : ''));
-    const index = drawIndex(position);
-    if (index) scene.append(index);
+    if (position.index !== undefined) {
+      scene.append(element('text', {
+        x: position.x,
+        y: position.y + 46,
+        class: 'index-label',
+      }, `[${position.index}]`));
+    }
   }
 
-  for (const item of state.buckets?.flatMap((bucket) => bucket.items ?? []) ?? []) {
-    const position = positions.get(item.id);
-    if (!position) continue;
-    scene.append(drawNode(item, position, focus.has(item.id) ? focusClass : ''));
-  }
+  drawPointerLabels(scene, state, positions);
 }

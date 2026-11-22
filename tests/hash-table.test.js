@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { HashTable, meta } from '../js/structures/hash-table.js';
+import { compute as computeHashLayout } from '../js/core/layout/hash.js';
 
 function run(iterator) {
   let result = iterator.next();
@@ -352,4 +353,32 @@ test('metadata declares Omega, Theta, Big O and key fields', () => {
   }
   assert.ok(meta.operations.get.average.text.includes('1/m'));
   assert.ok(meta.description.includes('expected O(1)'));
+});
+
+test('the hash layout produces textbook slot and chain positions', () => {
+  const chaining = build('chaining', 'modulo', [1, 8, 15]);
+  const chained = computeHashLayout(chaining.getState(), { width: 900, height: 560 });
+  for (const bucket of chaining.getState().buckets) {
+    assert.ok(chained.has(bucket.id), `bucket ${bucket.id} must have a slot position`);
+    const slot = chained.get(bucket.id);
+    assert.ok(slot.width > 0);
+    assert.ok(slot.x - slot.width / 2 >= 0, `${bucket.id} must not be clipped on the left`);
+    assert.ok(slot.x + slot.width / 2 <= 900, `${bucket.id} must not be clipped on the right`);
+    for (const item of bucket.items) {
+      assert.ok(chained.has(item.id), `item ${item.id} must have a chain position`);
+      assert.ok(chained.get(item.id).x > chained.get(bucket.id).x, 'chain nodes sit right of the slot');
+    }
+  }
+
+  const probing = build('linear', 'modulo', [1, 8]);
+  const probed = computeHashLayout(probing.getState(), { width: 900, height: 560 });
+  for (const bucket of probing.getState().buckets) {
+    for (const item of bucket.items) {
+      assert.deepEqual(
+        { x: probed.get(item.id).x, y: probed.get(item.id).y },
+        { x: probed.get(bucket.id).x, y: probed.get(bucket.id).y },
+        'open-addressing keys are stored inside their slot',
+      );
+    }
+  }
 });

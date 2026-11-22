@@ -48,11 +48,11 @@ export class Stack extends BaseStructure {
   static meta = meta;
 
   constructor() {
-    super(meta, { items: [], top: null, orientation: 'vertical' });
+    super(meta, { items: [], top: null, topLabel: 'TOP', orientation: 'vertical' });
   }
 
   initialState() {
-    return { items: [], top: null, orientation: 'vertical' };
+    return { items: [], top: null, topLabel: 'TOP', orientation: 'vertical' };
   }
 
   seed(values = []) {

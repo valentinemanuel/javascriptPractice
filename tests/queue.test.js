@@ -113,6 +113,14 @@ test('ids are unique and reset with the structure', () => {
   assert.equal(queue.getState().tail, 'item1');
 });
 
+test('state labels FRONT and BACK make FIFO direction explicit', () => {
+  const queue = new Queue().reset([1, 2]);
+  assert.equal(queue.getState().headLabel, 'FRONT');
+  assert.equal(queue.getState().tailLabel, 'BACK');
+  assert.equal(queue.getState().head, queue.getState().items[0].id);
+  assert.equal(queue.getState().tail, queue.getState().items[1].id);
+});
+
 test('the class exposes static metadata for the app shell', () => {
   assert.equal(Queue.meta, meta);
   assert.equal(Queue.meta.id, 'queue');

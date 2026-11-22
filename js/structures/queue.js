@@ -5,7 +5,7 @@ export const meta = {
   title: 'Queue',
   group: 'Linear',
   layout: 'linear',
-  description: 'A first-in, first-out (FIFO) collection. Elements enter at the back and leave from the front, like a line of people.',
+  description: 'A first-in, first-out (FIFO) collection. New values join the BACK; dequeue always removes the value at the FRONT, which is the one that has been waiting longest — not the value you just entered.',
   demo: [3, 7, 12],
   operations: {
     enqueue: {
@@ -48,13 +48,27 @@ export class Queue extends BaseStructure {
   static meta = meta;
 
   constructor() {
-    super(meta, { items: [], head: null, tail: null, orientation: 'horizontal' });
+    super(meta, {
+      items: [],
+      head: null,
+      tail: null,
+      headLabel: 'FRONT',
+      tailLabel: 'BACK',
+      orientation: 'horizontal',
+    });
     this._front = null;
     this._back = null;
   }
 
   initialState() {
-    return { items: [], head: null, tail: null, orientation: 'horizontal' };
+    return {
+      items: [],
+      head: null,
+      tail: null,
+      headLabel: 'FRONT',
+      tailLabel: 'BACK',
+      orientation: 'horizontal',
+    };
   }
 
   seed(values = []) {

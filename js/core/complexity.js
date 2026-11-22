@@ -11,9 +11,15 @@ export function complexityFor(meta, operation) {
   return meta?.operations?.[operation] ?? null;
 }
 
-export function renderComplexity(container, meta, activeOperation = null) {
+export function renderComplexity(container, meta, activeOperation = null, compact = false) {
   if (!container) return;
   container.replaceChildren();
+
+  const operations = Object.entries(meta?.operations ?? {});
+  const visible = compact
+    ? operations.filter(([name]) => name === activeOperation)
+    : operations;
+  const rows = visible.length > 0 ? visible : operations.slice(0, 1);
 
   const table = document.createElement('table');
   table.className = 'complexity-table';
@@ -30,7 +36,7 @@ export function renderComplexity(container, meta, activeOperation = null) {
   table.append(head);
 
   const body = document.createElement('tbody');
-  for (const [name, operation] of Object.entries(meta?.operations ?? {})) {
+  for (const [name, operation] of rows) {
     const row = document.createElement('tr');
     if (name === activeOperation) row.classList.add('is-active');
 
@@ -60,5 +66,11 @@ export function renderComplexity(container, meta, activeOperation = null) {
     note.className = 'complexity-note';
     note.textContent = active.description ?? '';
     container.append(note);
+  }
+  if (compact && operations.length > 1) {
+    const hint = document.createElement('p');
+    hint.className = 'complexity-note';
+    hint.textContent = `${operations.length} operations available — use “Show all” to compare every bound.`;
+    container.append(hint);
   }
 }

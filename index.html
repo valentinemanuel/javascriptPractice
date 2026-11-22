@@ -3,16 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="An interactive visualizer for data structures built with vanilla JavaScript.">
-    <title>estructura — Data Structures Visualizer</title>
+    <meta name="description" content="An interactive visualizer for 12 classic data structures, built with vanilla JavaScript.">
+    <title>estructura — Interactive Data Structures Visualizer</title>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <header class="topbar">
       <div class="brand">
-        <span class="logo" aria-hidden="true">◈</span>
-        <h1>estructura</h1>
-        <span class="tagline">Data structures, step by step</span>
+        <img class="brand-icon" src="favicon.svg" alt="" aria-hidden="true">
+        <div class="brand-copy">
+          <h1>estructura</h1>
+          <span class="tagline">Interactive Data Structures Visualizer · 12 structures · vanilla JS</span>
+        </div>
       </div>
       <div class="top-actions">
         <button id="theme-toggle" type="button" aria-label="Toggle color theme">☾ Dark</button>
@@ -22,14 +25,17 @@
 
     <main class="layout">
       <aside class="sidebar" aria-label="Structure list">
-        <h2>Structures</h2>
+        <h2>Structures <span id="structure-count" class="count-badge"></span></h2>
+        <p class="sidebar-hint">Pick a structure, then run an operation to watch it step by step.</p>
         <nav id="structure-nav"></nav>
       </aside>
 
       <section class="stage-panel">
         <div class="stage-header">
+          <div class="stage-kicker">VISUALIZATION</div>
           <h2 id="structure-title">Loading…</h2>
           <p id="structure-description"></p>
+          <p class="stage-hint">Use <strong>Play</strong> to animate, <strong>Step</strong> to advance one move at a time.</p>
         </div>
 
         <div class="stage-wrap">
@@ -39,6 +45,10 @@
         <div class="controls">
           <div id="fields" class="fields" aria-label="Operation arguments"></div>
           <div id="operation-buttons" class="button-row" aria-label="Operations"></div>
+          <details id="config-details" class="config-details" hidden>
+            <summary>Strategy &amp; hash settings</summary>
+            <div id="configuration-buttons" class="button-row"></div>
+          </details>
           <div class="playback">
             <button id="play-pause" type="button">▶ Play</button>
             <button id="step" type="button">⏭ Step</button>
@@ -53,9 +63,12 @@
       </section>
 
       <aside class="info-panel" aria-label="Details">
-        <h2>Complexity</h2>
+        <div class="info-heading">
+          <h2>Complexity</h2>
+          <button id="complexity-toggle" type="button" aria-expanded="false">Show all</button>
+        </div>
         <div id="complexity"></div>
-        <h2>Log</h2>
+        <div class="info-heading log-heading"><h2>Activity log</h2></div>
         <ol id="log" aria-live="polite"></ol>
       </aside>
     </main>

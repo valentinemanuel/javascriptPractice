@@ -76,6 +76,8 @@ export class LinkedList extends BaseStructure {
       edges: [],
       head: null,
       tail: null,
+      headLabel: 'HEAD',
+      tailLabel: 'TAIL',
       orientation: 'horizontal',
     });
   }
@@ -86,6 +88,8 @@ export class LinkedList extends BaseStructure {
       edges: [],
       head: null,
       tail: null,
+      headLabel: 'HEAD',
+      tailLabel: 'TAIL',
       orientation: 'horizontal',
     };
   }

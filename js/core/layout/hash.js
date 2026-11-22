@@ -1,51 +1,57 @@
 /**
- * Grid layout for hash tables.
- *
- * Buckets are placed in a centred grid with enough horizontal room for a
- * collision chain. Chain items sit to the right of their bucket and wrap to a
- * new chain row after three items, keeping long probe trails readable.
+ * Hash table layout inspired by textbook diagrams:
+ * an array of indexed slots, with linked-list chains extending to the right
+ * when separate chaining is selected. Open-addressing keys live inside slots.
  */
 
-const BUCKET_WIDTH = 68;
-const ITEMS_PER_ROW = 3;
-const ITEM_GAP = 56;
-const CHAIN_ROW_HEIGHT = 52;
-const BUCKET_OFFSET_X = 62;
-const TOP_PADDING = 90;
-
-function asArray(value) {
-  return Array.isArray(value) ? value : [];
-}
+const SLOT_WIDTH = 92;
+const SLOT_HEIGHT = 54;
+const TOP_PADDING = 86;
+const CHAIN_ROW_HEIGHT = 44;
+const CHAIN_COLUMN_GAP = 44;
+const CHAIN_ITEMS_PER_ROW = 3;
 
 export function compute(state = {}, viewport = {}) {
   const width = viewport.width ?? 900;
-  const buckets = asArray(state.buckets);
+  const buckets = Array.isArray(state.buckets) ? state.buckets : [];
   const positions = new Map();
   if (buckets.length === 0) return positions;
 
-  const itemsOf = (bucket) => asArray(bucket?.items);
-  const maxChain = Math.max(0, ...buckets.map((bucket) => itemsOf(bucket).length));
-  const cellWidth = 124 + Math.min(ITEMS_PER_ROW - 1, Math.max(0, maxChain - 1)) * ITEM_GAP;
-  const columns = Math.max(1, Math.min(8, Math.floor((width - 60) / cellWidth)));
-  const chainRows = Math.ceil(maxChain / ITEMS_PER_ROW);
-  const cellHeight = Math.max(112, 64 + chainRows * CHAIN_ROW_HEIGHT);
-
-  const gridWidth = (columns - 1) * cellWidth + BUCKET_WIDTH;
-  const startX = Math.max(0, (width - gridWidth) / 2) + BUCKET_WIDTH / 2;
+  const chaining = state.strategy === 'chaining';
+  const usableWidth = Math.max(200, width - 140);
+  const minimumGap = chaining ? 210 : 120;
+  const columns = Math.max(1, Math.min(buckets.length, Math.floor(usableWidth / minimumGap) + 1));
+  const columnGap = columns > 1 ? usableWidth / (columns - 1) : 0;
+  const rowHeight = chaining ? 134 : 92;
+  const startX = width / 2 - ((columns - 1) * columnGap) / 2;
 
   buckets.forEach((bucket, index) => {
     const column = index % columns;
     const row = Math.floor(index / columns);
-    const bucketX = startX + column * cellWidth;
-    const bucketY = TOP_PADDING + row * cellHeight;
-    positions.set(bucket.id, { x: bucketX, y: bucketY });
+    const x = startX + column * columnGap;
+    const y = TOP_PADDING + row * rowHeight + SLOT_HEIGHT / 2;
 
-    itemsOf(bucket).forEach((item, itemIndex) => {
-      const chainRow = Math.floor(itemIndex / ITEMS_PER_ROW);
-      const chainColumn = itemIndex % ITEMS_PER_ROW;
+    positions.set(bucket.id, {
+      x,
+      y,
+      width: SLOT_WIDTH,
+      height: SLOT_HEIGHT,
+      index,
+    });
+
+    const items = Array.isArray(bucket.items) ? bucket.items : [];
+    items.forEach((item, itemIndex) => {
+      if (!chaining) {
+        positions.set(item.id, { x, y, width: SLOT_WIDTH, height: SLOT_HEIGHT });
+        return;
+      }
+      const chainRow = Math.floor(itemIndex / CHAIN_ITEMS_PER_ROW);
+      const chainColumn = itemIndex % CHAIN_ITEMS_PER_ROW;
       positions.set(item.id, {
-        x: bucketX + BUCKET_OFFSET_X + chainColumn * ITEM_GAP,
-        y: bucketY + chainRow * CHAIN_ROW_HEIGHT,
+        x: x + SLOT_WIDTH / 2 + 26
+          + chainColumn * CHAIN_COLUMN_GAP + chainRow * CHAIN_COLUMN_GAP,
+        y: y + chainRow * CHAIN_ROW_HEIGHT,
+        radius: 19,
       });
     });
   });

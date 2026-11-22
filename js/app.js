@@ -9,6 +9,10 @@ const nav = byId('structure-nav');
 const title = byId('structure-title');
 const description = byId('structure-description');
 const toolbar = byId('operation-buttons');
+const configurationButtons = byId('configuration-buttons');
+const configDetails = byId('config-details');
+const complexityToggle = byId('complexity-toggle');
+const structureCount = byId('structure-count');
 const complexityPanel = byId('complexity');
 const logList = byId('log');
 const fields = byId('fields');
@@ -20,6 +24,17 @@ const speedValue = byId('speed-value');
 
 let current = null;
 let activeOperation = null;
+let showAllComplexity = false;
+
+function updateComplexity() {
+  if (!current) return;
+  renderComplexity(
+    complexityPanel,
+    current.structure.meta,
+    activeOperation,
+    !showAllComplexity,
+  );
+}
 
 let zoom = 1;
 let panX = 0;
@@ -130,6 +145,7 @@ function readFields(operation) {
 
 function buildNav() {
   nav.replaceChildren();
+  structureCount.textContent = String(Object.keys(registry).length);
   const groups = new Map();
   for (const [id, entry] of Object.entries(registry)) {
     const group = entry.group ?? 'Other';
@@ -155,14 +171,25 @@ function buildNav() {
 
 function buildToolbar() {
   toolbar.replaceChildren();
+  configurationButtons.replaceChildren();
   const operations = current.structure.meta.operations ?? {};
+  let configCount = 0;
+
   for (const [name, operation] of Object.entries(operations)) {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = operation.label ?? name;
     button.addEventListener('click', () => runOperation(name, operation));
-    toolbar.append(button);
+    if (name.startsWith('use') || name.startsWith('new')) {
+      configurationButtons.append(button);
+      configCount += 1;
+    } else {
+      toolbar.append(button);
+    }
   }
+
+  configDetails.hidden = configCount === 0;
+  if (configCount === 0) configDetails.open = false;
   buildFields(operations);
 }
 
@@ -177,7 +204,7 @@ function runOperation(name, operation) {
   const iterator = method.call(structure, ...args);
 
   activeOperation = name;
-  renderComplexity(complexityPanel, structure.meta, activeOperation);
+  updateComplexity();
   animator.load(iterator);
   animator.play();
 }
@@ -202,7 +229,7 @@ function load(id) {
   }
 
   buildToolbar();
-  renderComplexity(complexityPanel, structure.meta);
+  updateComplexity();
   clearLog();
   appendLog(`Loaded ${structure.meta.title}.`, 'info');
   draw();
@@ -220,7 +247,7 @@ resetButton.addEventListener('click', () => {
   animator.stop();
   current.structure.reset(current.structure.meta.demo ?? []);
   activeOperation = null;
-  renderComplexity(complexityPanel, current.structure.meta);
+  updateComplexity();
   clearLog();
   appendLog('Structure reset to its demo state.', 'info');
   draw();
@@ -229,6 +256,13 @@ resetButton.addEventListener('click', () => {
 speedInput.addEventListener('input', () => {
   animator.setSpeed(speedInput.value);
   speedValue.textContent = `${animator.speed}×`;
+});
+
+complexityToggle.addEventListener('click', () => {
+  showAllComplexity = !showAllComplexity;
+  complexityToggle.textContent = showAllComplexity ? 'Show less' : 'Show all';
+  complexityToggle.setAttribute('aria-expanded', String(showAllComplexity));
+  updateComplexity();
 });
 
 byId('reset-zoom').addEventListener('click', () => {
