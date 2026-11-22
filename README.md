@@ -20,7 +20,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
 - Hash table with four collision strategies, three hash functions and universal hashing.
-- Graph with directed/undirected and weighted/unweighted modes plus BFS, DFS and Dijkstra.
+- Graph with directed/undirected and weighted/unweighted modes plus BFS, DFS and Dijkstra. Vertices can be dragged to rearrange the layout; Dijkstra shows each vertex's current distance and directed arrows stop at the destination circle's edge. A compact legend explains the node-state colors.
 - Pure logic modules tested in Node with the built-in test runner.
 
 ## Structures
@@ -68,7 +68,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-291 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+298 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

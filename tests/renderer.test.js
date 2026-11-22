@@ -350,6 +350,80 @@ test('B+ tree connects its leaves with horizontal arrows', () => {
   }
 });
 
+test('trie root is marked with an empty-string symbol', () => {
+  const structure = new registry.trie.Structure().reset(registry.trie.Structure.meta.demo);
+  const state = structure.getState();
+  const svg = new FakeNode('svg');
+  render(svg, state, registry.trie.layout(state, { width: 900, height: 560 }), {});
+
+  const root = withClass(all(svg), 'node').find((node) => node.attributes['data-id'] === state.root);
+  assert.ok(root);
+  assert.equal(root.children.find((child) => child.name === 'text').textContent, 'Ø');
+});
+
+test('directed edges stop at the outer edge of the destination circle', () => {
+  const structure = new registry.graph.Structure().reset(registry.graph.Structure.meta.demo);
+  drain(structure.useDirected());
+  const state = structure.getState();
+  const directed = state.edges.filter((edge) => edge.directed);
+  assert.ok(directed.length > 0);
+
+  const positions = registry.graph.layout(state, { width: 900, height: 560 });
+  const svg = new FakeNode('svg');
+  render(svg, state, positions, {});
+  const edges = withClass(all(svg), 'edge');
+  assert.equal(edges.length, state.edges.length);
+  const line = edges[state.edges.indexOf(directed[0])];
+
+  const target = positions.get(directed[0].to);
+  const distance = Math.hypot(Number(line.attributes.x2) - target.x, Number(line.attributes.y2) - target.y);
+  assert.ok(Math.abs(distance - 28) < 0.01, `expected 28px, got ${distance}`);
+});
+
+test('undirected edges stay centre to centre without an arrow marker', () => {
+  const structure = new registry.graph.Structure().reset(registry.graph.Structure.meta.demo);
+  const state = structure.getState();
+  const positions = registry.graph.layout(state, { width: 900, height: 560 });
+  const svg = new FakeNode('svg');
+  render(svg, state, positions, {});
+
+  const lines = withClass(all(svg), 'edge');
+  assert.equal(lines.length, state.edges.length);
+  for (const [index, edge] of state.edges.entries()) {
+    const from = positions.get(edge.from);
+    const to = positions.get(edge.to);
+    assert.equal(Number(lines[index].attributes.x1), from.x);
+    assert.equal(Number(lines[index].attributes.y1), from.y);
+    assert.equal(Number(lines[index].attributes.x2), to.x);
+    assert.equal(Number(lines[index].attributes.y2), to.y);
+    assert.equal(lines[index].attributes['marker-end'], undefined);
+  }
+});
+
+test('visited vertices get the visited state class', () => {
+  const structure = new registry.graph.Structure().reset(registry.graph.Structure.meta.demo);
+  drain(structure.bfs(structure.getState().nodes[0].value));
+  const state = structure.getState();
+  const svg = new FakeNode('svg');
+  render(svg, state, registry.graph.layout(state, { width: 900, height: 560 }), {});
+
+  const visited = withClass(all(svg), 'is-visited');
+  assert.equal(visited.length, state.nodes.filter((node) => node.visited).length);
+  assert.ok(visited.length > 0);
+});
+
+test('distance labels show the current shortest distance', () => {
+  const structure = new registry.graph.Structure().reset(registry.graph.Structure.meta.demo);
+  const state = structure.getState();
+  state.nodes[0].dist = 7;
+  const svg = new FakeNode('svg');
+  render(svg, state, registry.graph.layout(state, { width: 900, height: 560 }), {});
+
+  const labels = withClass(all(svg), 'distance-label');
+  assert.equal(labels.length, 1);
+  assert.equal(labels[0].textContent, 'd = 7');
+});
+
 test('the scene transform survives repeated renders', () => {
   const svg = draw('bst');
   const scene = svg.querySelector('#scene');

@@ -59,13 +59,18 @@
 
         <div class="stage-wrap">
           <svg id="stage" role="img" aria-label="Data structure visualization"></svg>
+          <div class="state-legend" aria-label="Node state colors">
+            <span><i class="legend-dot is-visiting"></i>Visiting</span>
+            <span><i class="legend-dot is-found"></i>Found / Terminal</span>
+            <span><i class="legend-dot is-visited"></i>Visited</span>
+          </div>
         </div>
 
         <div id="controls" class="controls">
           <div id="fields" class="fields" aria-label="Operation arguments"></div>
           <div id="operation-buttons" class="button-row" aria-label="Operations"></div>
           <details id="config-details" class="config-details" hidden>
-            <summary>Strategy &amp; hash settings</summary>
+            <summary id="config-summary">Strategy &amp; hash settings</summary>
             <div id="configuration-buttons" class="button-row"></div>
           </details>
           <div class="playback">

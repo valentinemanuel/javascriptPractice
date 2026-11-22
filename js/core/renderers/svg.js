@@ -256,11 +256,30 @@ function drawEdge(edge, positions, focus, treeEdge = false, fromX = null) {
       'marker-end': edge.directed || edge.side ? marker : undefined,
     }));
   } else {
+    let start = { x: from.x, y: from.y };
+    let end = { x: to.x, y: to.y };
+    if (edge.directed) {
+      const dx = to.x - from.x;
+      const dy = to.y - from.y;
+      const length = Math.hypot(dx, dy) || 1;
+      const unitX = dx / length;
+      const unitY = dy / length;
+      const fromRadius = from.radius ?? 26;
+      const toRadius = to.radius ?? 26;
+      start = {
+        x: from.x + unitX * (fromRadius + 2),
+        y: from.y + unitY * (fromRadius + 2),
+      };
+      end = {
+        x: to.x - unitX * (toRadius + 2),
+        y: to.y - unitY * (toRadius + 2),
+      };
+    }
     group.append(element('line', {
-      x1: from.x,
-      y1: from.y,
-      x2: to.x,
-      y2: to.y,
+      x1: start.x,
+      y1: start.y,
+      x2: end.x,
+      y2: end.y,
       class: `edge${highlighted ? ' is-focus' : ''}`,
       'marker-end': edge.directed ? marker : undefined,
     }));
@@ -273,12 +292,14 @@ function drawEdge(edge, positions, focus, treeEdge = false, fromX = null) {
   return group;
 }
 
-function drawNode(node, position, focusClass, isPointer = false, variant = 'circle') {
+function drawNode(node, position, focusClass, isPointer = false, variant = 'circle', labelOverride = null) {
+  const displayLabel = labelOverride ?? labelFor(node);
   const classes = ['node'];
   if (focusClass) classes.push(focusClass);
   if (node.terminal) classes.push('is-terminal');
   if (isPointer) classes.push('is-pointer');
   if (node.tombstone) classes.push('is-tombstone');
+  if (node.visited) classes.push('is-visited');
 
   const group = element('g', {
     class: classes.join(' '),
@@ -314,7 +335,7 @@ function drawNode(node, position, focusClass, isPointer = false, variant = 'circ
       x: position.x,
       y: position.y + 6,
       class: 'node-label',
-    }, labelFor(node)));
+    }, displayLabel));
   } else if (Array.isArray(node.keys)) {
     group.append(element('rect', {
       x: position.x - width / 2,
@@ -346,7 +367,7 @@ function drawNode(node, position, focusClass, isPointer = false, variant = 'circ
       x: position.x,
       y: position.y + 6,
       class: 'node-label',
-    }, labelFor(node)));
+    }, displayLabel));
   }
 
   if (node.terminal) {
@@ -370,7 +391,7 @@ function drawNode(node, position, focusClass, isPointer = false, variant = 'circ
       x: position.x,
       y: position.y + height / 2 + 18,
       class: 'distance-label',
-    }, `d=${node.dist}`));
+    }, `d = ${node.dist}`));
   }
 
   return group;
@@ -722,6 +743,7 @@ export function render(svg, state, positions = new Map(), step = {}) {
     && state.head === undefined;
   const nodes = nodeList(state);
   const nodeById = new Map(nodes.map((node) => [node.id, node]));
+  const trieRoot = nodes.some((node) => node.value === '') ? state.root : null;
   const multiKey = treeEdges && nodes.some((node) => Array.isArray(node.keys));
   const outgoing = new Map();
   if (multiKey) {
@@ -757,7 +779,8 @@ export function render(svg, state, positions = new Map(), step = {}) {
     const position = positions.get(node.id);
     if (!position) continue;
     const className = focus.has(node.id) ? focusClass : '';
-    scene.append(drawNode(node, position, className, pointerIds.has(node.id), variant));
+    const labelOverride = node.id === trieRoot ? 'Ø' : null;
+    scene.append(drawNode(node, position, className, pointerIds.has(node.id), variant, labelOverride));
     if (position.index !== undefined) {
       scene.append(element('text', {
         x: stacked ? position.x - STACK_BLOCK.width / 2 - 22 : position.x,

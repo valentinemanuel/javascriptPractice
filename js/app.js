@@ -15,6 +15,7 @@ const description = byId('structure-description');
 const toolbar = byId('operation-buttons');
 const configurationButtons = byId('configuration-buttons');
 const configDetails = byId('config-details');
+const configSummary = byId('config-summary');
 const complexityToggle = byId('complexity-toggle');
 const structureCount = byId('structure-count');
 const headerStructureCount = byId('header-structure-count');
@@ -244,6 +245,9 @@ function buildToolbar() {
   primaryOperation = pickPrimaryOperation(operations);
   configDetails.hidden = configCount === 0;
   if (configCount === 0) configDetails.open = false;
+  configSummary.textContent = current.id === 'graph'
+    ? 'Strategy & graph settings'
+    : 'Strategy & hash settings';
   buildFields(operations);
 }
 
@@ -279,6 +283,7 @@ function load(id) {
   title.textContent = structure.meta.title;
   description.textContent = structure.meta.description;
   svg.setAttribute('aria-label', `${structure.meta.title} visualization`);
+  svg.classList.toggle('is-graph', id === 'graph');
 
   for (const button of nav.querySelectorAll('.structure-link')) {
     button.classList.toggle('is-active', button.dataset.id === id);
@@ -377,15 +382,51 @@ svg.addEventListener('wheel', (event) => {
 }, { passive: false });
 
 let dragging = false;
+let draggingNode = null;
+let dragOffset = { x: 0, y: 0 };
 let lastX = 0;
 let lastY = 0;
+
+function scenePoint(event) {
+  const rect = svg.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left - panX) / zoom,
+    y: (event.clientY - rect.top - panY) / zoom,
+  };
+}
+
 svg.addEventListener('pointerdown', (event) => {
+  const node = event.target.closest?.('.node[data-id]');
+  if (node && current?.id === 'graph') {
+    draggingNode = node.getAttribute('data-id');
+    const position = current.entry
+      .layout(current.structure.getState(), viewport())
+      .get(draggingNode);
+    const point = scenePoint(event);
+    dragOffset = position
+      ? { x: position.x - point.x, y: position.y - point.y }
+      : { x: 0, y: 0 };
+    svg.setPointerCapture(event.pointerId);
+    event.preventDefault();
+    return;
+  }
   dragging = true;
   lastX = event.clientX;
   lastY = event.clientY;
   svg.setPointerCapture(event.pointerId);
 });
 svg.addEventListener('pointermove', (event) => {
+  if (draggingNode) {
+    const point = scenePoint(event);
+    const state = current.structure.getState();
+    state.pinned = state.pinned ?? {};
+    state.pinned[draggingNode] = {
+      x: point.x + dragOffset.x,
+      y: point.y + dragOffset.y,
+    };
+    draw();
+    return;
+  }
   if (!dragging) return;
   panX += event.clientX - lastX;
   panY += event.clientY - lastY;
@@ -393,7 +434,12 @@ svg.addEventListener('pointermove', (event) => {
   lastY = event.clientY;
   applyTransform();
 });
-svg.addEventListener('pointerup', () => { dragging = false; });
+function endDrag() {
+  dragging = false;
+  draggingNode = null;
+}
+svg.addEventListener('pointerup', endDrag);
+svg.addEventListener('pointercancel', endDrag);
 
 window.addEventListener('hashchange', () => {
   const id = window.location.hash.replace(/^#\/?/, '');
