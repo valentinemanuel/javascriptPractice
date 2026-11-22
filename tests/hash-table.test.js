@@ -175,7 +175,9 @@ test('every hash function produces its documented home index', () => {
   const modulo = build('linear', 'modulo', []);
   const moduloSteps = [...modulo.put(key)];
   assert.equal(moduloSteps[0].type, 'hash');
-  assert.equal(moduloSteps[0].payload.index, ((key % 7) + 7) % 7);
+  const moduloIndex = ((key % 7) + 7) % 7;
+  assert.equal(moduloSteps[0].payload.index, moduloIndex);
+  assert.equal(moduloSteps[0].payload.expression, `${key} mod 7 = ${moduloIndex}`);
 
   const multiplication = build('linear', 'multiplication', []);
   const multiplicationSteps = [...multiplication.put(key)];
@@ -183,6 +185,7 @@ test('every hash function produces its documented home index', () => {
   const expectedMultiplication = Math.floor(7 * (key * golden - Math.floor(key * golden)));
   assert.equal(multiplicationSteps[0].payload.index, expectedMultiplication);
   assert.equal(multiplicationSteps[0].payload.a, golden);
+  assert.match(multiplicationSteps[0].payload.expression, /frac\(10 × 0\.618034\)/);
 
   const universal = build('linear', 'universal', []);
   const universalSteps = [...universal.put(key)];
@@ -196,6 +199,10 @@ test('every hash function produces its documented home index', () => {
   assert.equal(universalSteps[0].payload.a, a);
   assert.equal(universalSteps[0].payload.b, b);
   assert.equal(universalSteps[0].payload.p, state.p);
+  assert.equal(
+    universalSteps[0].payload.expression,
+    `((${a}·${key} + ${b}) mod ${state.p}) mod ${state.capacity} = ${expectedUniversal}`,
+  );
 });
 
 test('newUniversalFamily advances the LCG pair and changes indices', () => {
@@ -371,6 +378,8 @@ test('the hash layout produces textbook slot and chain positions', () => {
   const chained = computeHashLayout(chaining.getState(), { width: 900, height: 560 });
   assert.ok(chained.has('__hash'), 'the hash function box must have a position');
   assert.ok(chained.has('__table'), 'the Index/Value table must have a position');
+  const chain = chained.get('__chain');
+  assert.ok(chain.x + (chain.max - 1) * chain.step + 22 <= 900, 'chain nodes must stay in the viewport');
   for (const bucket of chaining.getState().buckets) {
     assert.ok(chained.has(bucket.id), `bucket ${bucket.id} must have a table row`);
     const row = chained.get(bucket.id);

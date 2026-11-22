@@ -240,12 +240,24 @@ export class HashTable extends BaseStructure {
     return { home, indices };
   }
 
+  _expression(key, index) {
+    const m = this.state.capacity;
+    if (key === undefined || !Number.isFinite(index)) return `${this.state.hash} hashing`;
+    if (this.state.hash === 'modulo') return `${key} mod ${m} = ${index}`;
+    if (this.state.hash === 'multiplication') {
+      return `⌊${m} · frac(${key} × ${GOLDEN_A.toFixed(6)})⌋ ≈ ${index}`;
+    }
+    const { a, b } = this._universalParams();
+    return `((${a}·${key} + ${b}) mod ${this.state.p}) mod ${m} = ${index}`;
+  }
+
   _hashPayload(key, index) {
     const payload = {
       key,
       index,
       hash: this.state.hash,
       bucket: `bucket-${index}`,
+      expression: this._expression(key, index),
     };
     if (this.state.hash === 'universal') {
       const { a, b } = this._universalParams();
@@ -279,7 +291,7 @@ export class HashTable extends BaseStructure {
     return `Probed bucket-${index} for key ${key} with double hashing on attempt ${attempt}.`;
   }
 
-  _probeStep(key, index, attempt, probedIds) {
+  _probeStep(key, index, attempt, probedIds, expression) {
     return {
       type: 'probe',
       message: this._probeMessage(key, index, attempt),
@@ -290,6 +302,7 @@ export class HashTable extends BaseStructure {
         attempt,
         probe: [...probedIds],
         strategy: this.state.strategy,
+        expression,
       },
     };
   }
@@ -354,6 +367,7 @@ export class HashTable extends BaseStructure {
     let found = null;
     let foundIndex = -1;
     let emptyIndex = -1;
+    const expression = this._expression(key, home);
 
     yield this._hashStep(key, indices[0] ?? home);
 
@@ -361,7 +375,7 @@ export class HashTable extends BaseStructure {
       const index = indices[attempt];
       const bucketId = this.state.buckets[index].id;
       probedIds.push(bucketId);
-      yield this._probeStep(key, index, attempt + 1, probedIds);
+      yield this._probeStep(key, index, attempt + 1, probedIds, expression);
 
       const bucket = this.state.buckets[index];
       if (this.state.strategy === 'chaining') {
@@ -387,7 +401,7 @@ export class HashTable extends BaseStructure {
       if (item.tombstone && firstTombstone === -1) firstTombstone = index;
     }
 
-    return { home, indices, probedIds, firstTombstone, found, foundIndex, emptyIndex };
+    return { home, indices, probedIds, firstTombstone, found, foundIndex, emptyIndex, expression };
   }
 
   *put(key) {
@@ -400,7 +414,7 @@ export class HashTable extends BaseStructure {
         type: 'insert',
         message: `Key ${key} was already stored, so its value was refreshed in place.`,
         focus: [info.found.id],
-        payload: { key, id: info.found.id, probe: info.probedIds },
+        payload: { key, id: info.found.id, probe: info.probedIds, expression: info.expression },
       };
       return key;
     }
@@ -418,7 +432,7 @@ export class HashTable extends BaseStructure {
         type: 'collision',
         message: `Bucket-${targetIndex} already holds items, so key ${key} was appended to its chain.`,
         focus: [bucket.id, ...bucket.items.map((entry) => entry.id)],
-        payload: { key, index: targetIndex, bucket: bucket.id, probe: info.probedIds },
+        payload: { key, index: targetIndex, bucket: bucket.id, probe: info.probedIds, expression: info.expression },
       };
     }
     let item;
@@ -441,6 +455,7 @@ export class HashTable extends BaseStructure {
         index: targetIndex,
         bucket: bucket.id,
         probe: info.probedIds,
+        expression: info.expression,
       },
     };
     return key;
@@ -459,6 +474,7 @@ export class HashTable extends BaseStructure {
           index: info.foundIndex,
           bucket: this.state.buckets[info.foundIndex].id,
           probe: info.probedIds,
+          expression: info.expression,
         },
       };
       return info.found.value;
@@ -467,7 +483,7 @@ export class HashTable extends BaseStructure {
       type: 'miss',
       message: `Key ${key} is not present in the table.`,
       focus: [],
-      payload: { key, probe: info.probedIds },
+      payload: { key, probe: info.probedIds, expression: info.expression },
     };
     return null;
   }
@@ -479,7 +495,7 @@ export class HashTable extends BaseStructure {
         type: 'miss',
         message: `Key ${key} was not found, so nothing was removed.`,
         focus: [],
-        payload: { key, probe: info.probedIds },
+        payload: { key, probe: info.probedIds, expression: info.expression },
       };
       return null;
     }
@@ -503,6 +519,7 @@ export class HashTable extends BaseStructure {
         bucket: this.state.buckets[info.foundIndex].id,
         probe: info.probedIds,
         tombstone,
+        expression: info.expression,
       },
     };
     return key;

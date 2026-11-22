@@ -133,7 +133,7 @@ test('hash rows distinguish occupied, empty and tombstone slots', () => {
   let nodes = drawHashState(table.getState(), { type: 'hash', payload: {} });
   assert.ok(withClasses(nodes, 'hash-row', 'is-occupied').length > 0);
   assert.ok(withClasses(nodes, 'hash-row', 'is-empty').length > 0);
-  assert.equal(withClass(nodes, 'hash-key-arrow').length, 2);
+  assert.equal(withClass(nodes, 'hash-key-arrow').length, 3); // two keys + the active input card
 
   drain(table.remove(1));
   nodes = drawHashState(table.getState(), { type: 'hash', payload: {} });
@@ -155,7 +155,34 @@ test('probe steps draw numbered arrows from the hash function', () => {
   assert.equal(badges[0].textContent, '1');
 
   const hashResult = nodes.find((node) => node.attributes.class === 'hash-function-result');
-  assert.equal(hashResult.textContent, `h(${probeStep.payload.key}) = 1`);
+  assert.equal(hashResult.textContent, probeStep.payload.expression);
+  assert.match(hashResult.textContent, /mod 7 = 1/);
+
+  const curves = nodes.filter((node) => (node.attributes.class ?? '').includes('hash-probe-arrow'));
+  assert.ok(curves.length > 0);
+  assert.ok(curves.every((curve) => curve.name === 'path' && / C /.test(curve.attributes.d)));
+  assert.ok(curves.every((curve) => /is-animating/.test(curve.attributes.class)));
+
+  const positions = computeHashLayout(table.getState(), { width: 900, height: 560 });
+  const target = positions.get(probeStep.payload.probe.at(-1));
+  const tableLeft = target.x - target.width / 2;
+  assert.ok(curves.some((curve) => curve.attributes.d.endsWith(` ${tableLeft} ${target.y}`)));
+
+  const input = withClass(nodes, 'hash-input-card')[0];
+  assert.match(input.children[1].textContent, /^Key: 15$/);
+});
+
+test('chaining draws linked key nodes to the right of the value cell', () => {
+  const table = new HashTable().reset();
+  drain(table.useChaining());
+  drain(table.put(1));
+  drain(table.put(8));
+
+  const nodes = drawHashState(table.getState(), { type: 'hash', payload: { key: 8 } });
+  const chainNodes = withClass(nodes, 'hash-chain-node');
+  assert.ok(chainNodes.length > 0);
+  assert.ok(chainNodes.some((node) => node.children[1].textContent === '[8]'));
+  assert.ok(withClass(nodes, 'hash-chain-arrow').length > 0);
 });
 
 test('the scene transform survives repeated renders', () => {
@@ -166,4 +193,15 @@ test('the scene transform survives repeated renders', () => {
   structure.reset(structure.meta.demo);
   render(svg, structure.getState(), new Map(), {});
   assert.equal(svg.querySelector('#scene').getAttribute('transform'), 'translate(12 8) scale(1.3)');
+});
+
+test('the hash path also preserves the scene transform', () => {
+  const table = new HashTable().reset();
+  for (const value of [1, 8]) drain(table.put(value));
+  const svg = new FakeNode('svg');
+  const positions = computeHashLayout(table.getState(), { width: 900, height: 560 });
+  render(svg, table.getState(), positions, { type: 'hash', payload: {} });
+  svg.querySelector('#scene').setAttribute('transform', 'translate(3 4) scale(0.8)');
+  render(svg, table.getState(), positions, { type: 'hash', payload: {} });
+  assert.equal(svg.querySelector('#scene').getAttribute('transform'), 'translate(3 4) scale(0.8)');
 });

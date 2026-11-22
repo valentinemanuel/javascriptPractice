@@ -378,6 +378,9 @@ html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
 
 /* Hash diagram: keys -> hash function -> Index / Value table */
 .hash-key-arrow { stroke: var(--edge); stroke-width: 1.4; }
+.hash-key-arrow.is-input { stroke: var(--accent); stroke-width: 1.8; }
+.hash-input-card rect { fill: url(#node-grad-active); stroke: var(--accent); stroke-width: 2; filter: url(#glow); }
+.hash-input-text { fill: var(--text); font-size: 13px; font-weight: 700; text-anchor: middle; }
 .hash-key rect {
   fill: url(#node-grad-default);
   stroke: var(--accent);
@@ -403,9 +406,11 @@ html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
 }
 .hash-function-title { fill: var(--text); font-size: 15px; font-weight: 700; text-anchor: middle; }
 .hash-function-meta { fill: var(--muted); font-size: 11px; text-anchor: middle; }
-.hash-function-result { fill: var(--accent); font-size: 12px; font-weight: 700; text-anchor: middle; }
-.hash-hash-arrow { stroke: var(--accent); stroke-width: 1.6; }
-.hash-probe-arrow { stroke: var(--probe); stroke-width: 1.6; stroke-dasharray: 5 3; }
+.hash-function-result { fill: var(--accent); font-size: 11px; font-weight: 700; text-anchor: middle; }
+.hash-hash-arrow { fill: none; stroke: var(--accent); stroke-width: 1.6; stroke-linecap: round; }
+.hash-probe-arrow { fill: none; stroke: var(--probe); stroke-width: 1.6; stroke-dasharray: 5 3; stroke-linecap: round; }
+.hash-probe-arrow.is-animating { animation: hash-probe-flow 0.7s linear infinite; }
+@keyframes hash-probe-flow { to { stroke-dashoffset: -16; } }
 .hash-hash-badge { fill: var(--accent); font-size: 12px; font-weight: 600; }
 
 .hash-table-header rect { fill: var(--panel-2); stroke: var(--border); stroke-width: 1; }
@@ -427,6 +432,16 @@ html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
 .hash-row.is-tombstone .hash-row-value { fill: var(--miss); }
 .hash-probe-badge { fill: var(--probe); font-size: 11px; font-weight: 700; text-anchor: middle; }
 .hash-probe-badge-circle { fill: var(--panel); stroke: var(--probe); stroke-width: 2; }
+.hash-chain-arrow { stroke: var(--edge); stroke-width: 1.5; }
+.hash-chain-node rect { fill: var(--panel-2); stroke: var(--accent); stroke-width: 1.4; }
+.hash-chain-node.is-focus rect, .hash-chain-node.is-probe rect, .hash-chain-node.is-collision rect {
+  fill: url(#node-grad-active);
+  filter: url(#glow);
+}
+.hash-chain-node.is-found rect { fill: url(#node-grad-found); stroke: var(--found); }
+.hash-chain-node.is-miss rect { fill: rgba(248, 81, 73, 0.14); stroke: var(--miss); }
+.hash-chain-text { fill: var(--text); font-size: 11px; font-weight: 600; text-anchor: middle; }
+.hash-chain-overflow { fill: var(--muted); font-size: 11px; font-weight: 700; text-anchor: middle; }
 
 @media (max-width: 1100px) {
   .layout { grid-template-columns: 180px minmax(0, 1fr) 250px; }
