@@ -178,8 +178,8 @@ function drawNode(node, position, focusClass, isPointer = false) {
     'aria-label': `${node.tombstone ? 'deleted slot' : labelFor(node)}${node.dist !== undefined ? `, distance ${node.dist}` : ''}`,
     tabindex: '0',
   });
-  const width = position.width ?? (Array.isArray(node.keys) ? Math.max(78, node.keys.length * 40 + 14) : 46);
-  const height = position.height ?? 46;
+  const width = position.width ?? (Array.isArray(node.keys) ? Math.max(88, node.keys.length * 44 + 16) : 54);
+  const height = position.height ?? 50;
 
   if (Array.isArray(node.keys)) {
     group.append(element('rect', {
@@ -207,7 +207,7 @@ function drawNode(node, position, focusClass, isPointer = false) {
       }, key));
     });
   } else {
-    group.append(element('circle', { cx: position.x, cy: position.y, r: position.radius ?? 23 }));
+    group.append(element('circle', { cx: position.x, cy: position.y, r: position.radius ?? 26 }));
     group.append(element('text', {
       x: position.x,
       y: position.y + 6,
@@ -216,7 +216,7 @@ function drawNode(node, position, focusClass, isPointer = false) {
   }
 
   if (node.terminal) {
-    const radius = position.radius ?? 23;
+    const radius = position.radius ?? 26;
     group.append(element('circle', {
       cx: position.x,
       cy: position.y,
@@ -264,7 +264,7 @@ function drawPointerLabels(scene, state, positions) {
     if (!position) continue;
     scene.append(element('text', {
       x: position.x,
-      y: position.y - (position.radius ?? 30) - 16,
+      y: position.y - (position.radius ?? 33) - 18,
       class: `pointer-label ${className}`,
     }, text));
   }
@@ -582,7 +582,7 @@ export function render(svg, state, positions = new Map(), step = {}) {
     if (position.index !== undefined) {
       scene.append(element('text', {
         x: position.x,
-        y: position.y + 46,
+        y: position.y + 52,
         class: 'index-label',
       }, `[${position.index}]`));
     }

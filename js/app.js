@@ -4,6 +4,7 @@ import { render } from './core/renderers/svg.js';
 import { renderComplexity } from './core/complexity.js';
 import { initBackground } from './ui/background.js';
 import { applyRandomData } from './ui/random-data.js';
+import { computeFitTransform } from './core/fit.js';
 
 const byId = (id) => document.getElementById(id);
 const svg = byId('stage');
@@ -69,6 +70,43 @@ function viewport() {
 function applyTransform() {
   const scene = svg.querySelector('#scene');
   if (scene) scene.setAttribute('transform', `translate(${panX} ${panY}) scale(${zoom})`);
+}
+
+function fitSceneToViewport() {
+  const scene = svg.querySelector('#scene');
+  if (!scene || typeof scene.getBBox !== 'function') return;
+
+  let box;
+  try {
+    box = scene.getBBox();
+  } catch {
+    return;
+  }
+  if (!box || !box.width || !box.height) return;
+
+  const stageRect = svg.getBoundingClientRect();
+  const controlsRect = controlsPanel?.getBoundingClientRect();
+  const header = document.querySelector('.stage-header');
+  const headerRect = header?.getBoundingClientRect();
+  const top = Math.max(0, (headerRect?.bottom ?? stageRect.top) - stageRect.top);
+  const bottom = Math.min(
+    stageRect.height,
+    controlsRect ? controlsRect.top - stageRect.top : stageRect.height,
+  );
+
+  const transform = computeFitTransform(box, {
+    width: stageRect.width,
+    height: stageRect.height,
+    top,
+    bottom: Math.max(top + 80, bottom),
+    maxScale: 1.35,
+  });
+  if (!transform) return;
+
+  zoom = transform.scale;
+  panX = transform.translateX;
+  panY = transform.translateY;
+  applyTransform();
 }
 
 function draw(step = {}) {
@@ -243,6 +281,7 @@ function load(id) {
   clearLog();
   appendLog(`Loaded ${structure.meta.title}.`, 'info');
   draw();
+  fitSceneToViewport();
 }
 
 playPause.addEventListener('click', () => {
@@ -261,6 +300,7 @@ resetButton.addEventListener('click', () => {
   clearLog();
   appendLog('Structure reset to its demo state.', 'info');
   draw();
+  fitSceneToViewport();
 });
 
 speedInput.addEventListener('input', () => {
@@ -284,10 +324,7 @@ byId('zoom-in').addEventListener('click', () => setZoom(1.2));
 byId('zoom-out').addEventListener('click', () => setZoom(1 / 1.2));
 
 byId('reset-zoom').addEventListener('click', () => {
-  zoom = 1;
-  panX = 0;
-  panY = 0;
-  applyTransform();
+  fitSceneToViewport();
 });
 
 byId('random-data').addEventListener('click', () => {
@@ -299,6 +336,7 @@ byId('random-data').addEventListener('click', () => {
   clearLog();
   appendLog('Loaded a fresh random dataset.', 'info');
   draw();
+  fitSceneToViewport();
 });
 
 byId('theme-toggle').addEventListener('click', (event) => {

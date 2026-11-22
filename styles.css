@@ -6,6 +6,7 @@
   --border: #2a3441;
   --border-subtle: rgba(255, 255, 255, 0.08);
   --text: #e6edf3;
+  --text-primary: #e6edf3;
   --muted: #8b98a8;
   --accent: #58a6ff;
   --accent-soft: rgba(88, 166, 255, 0.18);
@@ -26,6 +27,7 @@ html[data-theme="light"] {
   --border: #d8dee4;
   --border-subtle: rgba(31, 35, 40, 0.1);
   --text: #1f2328;
+  --text-primary: #1f2328;
   --muted: #59636e;
   --accent: #0969da;
   --accent-soft: rgba(9, 105, 218, 0.12);
@@ -90,8 +92,9 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
 
 .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .brand-icon { width: 30px; height: 30px; flex: none; }
-.brand-links { fill: none; stroke: var(--accent); stroke-width: 3; stroke-linecap: round; }
-.brand-nodes { fill: var(--accent); }
+.brand-badge { fill: var(--accent); fill-opacity: 0.16; stroke: var(--accent); stroke-opacity: 0.35; }
+.brand-links { fill: none; stroke: var(--accent); stroke-width: 1.8; stroke-linecap: round; }
+.brand-nodes circle { fill: var(--text-primary); stroke: var(--accent); stroke-width: 1.4; }
 .brand-copy h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; }
 .header-badges { display: flex; gap: 6px; margin-left: 4px; }
 .header-badge {
@@ -100,7 +103,7 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   letter-spacing: 0.02em;
   color: var(--muted);
   border: 1px solid var(--border-subtle);
-  background: rgba(88, 166, 255, 0.08);
+  background: var(--accent-soft);
   border-radius: 999px;
   padding: 3px 8px;
   white-space: nowrap;
@@ -254,8 +257,23 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   border-top: 1px dashed var(--border);
   padding-top: 8px;
 }
-.speed-field { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); margin-left: auto; }
-.speed-field input { width: 96px; accent-color: var(--accent); }
+.speed-field {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-left: auto;
+  flex: none;
+  white-space: nowrap;
+}
+.speed-field input { width: 96px; flex: none; accent-color: var(--accent); }
+#speed-value {
+  display: inline-block;
+  min-width: 36px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 
 .info-heading { display: flex; align-items: center; justify-content: space-between; }
 .info-heading button { padding: 3px 8px; font-size: 11px; }
@@ -350,7 +368,20 @@ html[data-theme="light"] .grad-found-2 { stop-color: #3fb950; }
   stroke: var(--accent);
   stroke-width: 2;
 }
-.node text { fill: var(--text); font-size: 14px; text-anchor: middle; pointer-events: none; }
+.node .node-label {
+  fill: var(--text);
+  font-size: 15px;
+  font-weight: 700;
+  text-anchor: middle;
+  pointer-events: none;
+}
+.node .distance-label {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+  text-anchor: middle;
+  pointer-events: none;
+}
 .node .key-divider { stroke: var(--border); stroke-width: 1; }
 
 .node.is-terminal .terminal-ring { fill: none; stroke: var(--found); stroke-width: 1.5; }

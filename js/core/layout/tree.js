@@ -11,7 +11,7 @@
 
 const TOP_PADDING = 80;
 const LEVEL_GAP = 96;
-const MIN_GAP = 48;
+const MIN_GAP = 58;
 const MAX_GAP = 88;
 
 function asArray(value) {
