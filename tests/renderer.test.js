@@ -185,6 +185,56 @@ test('chaining draws linked key nodes to the right of the value cell', () => {
   assert.ok(withClass(nodes, 'hash-chain-arrow').length > 0);
 });
 
+test('stack uses rounded blocks, an open guide frame and centred index labels', () => {
+  const svg = draw('stack');
+  const nodes = all(svg);
+
+  const guides = withClass(nodes, 'stack-guide');
+  assert.equal(guides.length, 1);
+  assert.match(guides[0].attributes.d, / Q /);
+  assert.equal(guides[0].attributes.fill, 'none');
+
+  const structure = new registry.stack.Structure();
+  structure.reset(structure.meta.demo);
+  const state = structure.getState();
+  const positions = registry.stack.layout(state, { width: 900, height: 560 });
+  const labels = withClass(nodes, 'index-label');
+  assert.equal(labels.length, state.items.length);
+  labels.forEach((label, index) => {
+    const position = positions.get(state.items[index].id);
+    assert.equal(label.attributes.y, String(position.y));
+    assert.ok(Number(label.attributes.x) < position.x - 40);
+  });
+
+  const blocks = withClass(nodes, 'node')
+    .flatMap((node) => node.children.filter((child) => child.name === 'rect'));
+  assert.ok(blocks.length > 0);
+  assert.ok(blocks.every((block) => block.attributes.rx === '8'));
+});
+
+test('horizontal structures keep their original labels and circular nodes', () => {
+  const svg = draw('array');
+  const nodes = all(svg);
+  const structure = new registry.array.Structure();
+  structure.reset(structure.meta.demo);
+  const state = structure.getState();
+  const positions = registry.array.layout(state, { width: 900, height: 560 });
+
+  const labels = withClass(nodes, 'index-label');
+  assert.equal(labels.length, state.items.length);
+  labels.forEach((label, index) => {
+    const position = positions.get(state.items[index].id);
+    assert.equal(label.attributes.x, String(position.x));
+    assert.equal(label.attributes.y, String(position.y + 52));
+    assert.equal(label.attributes.class, 'index-label');
+  });
+
+  assert.equal(withClass(nodes, 'stack-guide').length, 0);
+  assert.ok(withClass(nodes, 'node').every(
+    (node) => node.children.some((child) => child.name === 'circle'),
+  ));
+});
+
 test('the scene transform survives repeated renders', () => {
   const svg = draw('bst');
   const scene = svg.querySelector('#scene');

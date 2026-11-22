@@ -5,6 +5,7 @@ import { renderComplexity } from './core/complexity.js';
 import { initBackground } from './ui/background.js';
 import { applyRandomData } from './ui/random-data.js';
 import { computeFitTransform } from './core/fit.js';
+import { isPrimaryActionKey, isPlaybackShortcut, pickPrimaryOperation } from './core/shortcuts.js';
 
 const byId = (id) => document.getElementById(id);
 const svg = byId('stage');
@@ -29,6 +30,8 @@ const speedValue = byId('speed-value');
 
 let current = null;
 let activeOperation = null;
+let primaryOperation = null;
+let stepCount = 0;
 let showAllComplexity = false;
 
 function updateComplexity() {
@@ -48,7 +51,8 @@ let panY = 0;
 const animator = new Animator({
   onStep(step) {
     draw(step);
-    appendLog(step.message, step.type);
+    stepCount += 1;
+    appendLog(`#${stepCount} ${step.message}`, step.type);
   },
   onDone() {
     appendLog('Operation finished.', 'done');
@@ -122,8 +126,9 @@ function appendLog(message, type = 'info') {
   const item = document.createElement('li');
   item.className = `is-${type}`;
   item.textContent = message;
-  logList.prepend(item);
-  while (logList.children.length > 80) logList.lastElementChild.remove();
+  logList.append(item);
+  while (logList.children.length > 80) logList.firstElementChild.remove();
+  logList.scrollTop = logList.scrollHeight;
 }
 
 function clearLog() {
@@ -236,6 +241,7 @@ function buildToolbar() {
     }
   }
 
+  primaryOperation = pickPrimaryOperation(operations);
   configDetails.hidden = configCount === 0;
   if (configCount === 0) configDetails.open = false;
   buildFields(operations);
@@ -252,6 +258,7 @@ function runOperation(name, operation) {
   const iterator = method.call(structure, ...args);
 
   activeOperation = name;
+  stepCount = 0;
   updateComplexity();
   animator.load(iterator);
   animator.play();
@@ -266,6 +273,7 @@ function load(id) {
   structure.reset(structure.meta.demo ?? []);
   current = { id, entry, structure };
   activeOperation = null;
+  stepCount = 0;
 
   if (window.location.hash !== `#/${id}`) window.location.hash = `#/${id}`;
   title.textContent = structure.meta.title;
@@ -284,18 +292,33 @@ function load(id) {
   fitSceneToViewport();
 }
 
-playPause.addEventListener('click', () => {
+function togglePlayback() {
   if (animator.playing) animator.pause();
   else animator.play();
-});
+}
+
+playPause.addEventListener('click', togglePlayback);
 
 stepButton.addEventListener('click', () => animator.step());
+
+fields.addEventListener('keydown', (event) => {
+  if (!isPrimaryActionKey(event) || !primaryOperation) return;
+  event.preventDefault();
+  runOperation(primaryOperation.name, primaryOperation.operation);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (!isPlaybackShortcut(event) || !current) return;
+  event.preventDefault();
+  togglePlayback();
+});
 
 resetButton.addEventListener('click', () => {
   if (!current) return;
   animator.stop();
   current.structure.reset(current.structure.meta.demo ?? []);
   activeOperation = null;
+  stepCount = 0;
   updateComplexity();
   clearLog();
   appendLog('Structure reset to its demo state.', 'info');
@@ -332,6 +355,7 @@ byId('random-data').addEventListener('click', () => {
   animator.stop();
   applyRandomData(current.structure, current.id);
   activeOperation = null;
+  stepCount = 0;
   updateComplexity();
   clearLog();
   appendLog('Loaded a fresh random dataset.', 'info');

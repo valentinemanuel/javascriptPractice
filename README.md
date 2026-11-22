@@ -9,7 +9,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 ## Features
 
 - 12 structures, each with its own operation toolbar and complexity table.
-- Step-by-step playback: play, pause, single step, speed control and reset.
+- Step-by-step playback: play, pause, single step, speed control and reset. Each step is numbered in the activity log, which auto-scrolls to the newest event. Press **Enter** in an argument field to run the primary operation and **Space** outside any control to toggle playback.
 - Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges, rounded edge badges and FRONT/BACK / HEAD/TAIL markers on linear structures.
 - Hash tables use a three-stage left-to-right diagram: an **Input Key** card, a **Hash Function** block showing the live calculation (`25 mod 7 = 4`) and a vertical **Index / Value** table. A curved arrow points to the resulting row, chaining nodes hang off that row, and probe attempts are numbered and animated.
 - Persistent controls: the operation bar stays visible and the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
@@ -67,7 +67,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-281 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+287 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

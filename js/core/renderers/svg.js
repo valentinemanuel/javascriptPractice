@@ -116,6 +116,31 @@ function labelFor(node) {
   return node.id;
 }
 
+const STACK_BLOCK = { width: 96, height: 50, radius: 8 };
+
+function drawStackGuide(scene, positions) {
+  const slots = [...positions.values()].filter((position) => position.index !== undefined);
+  if (slots.length === 0) return;
+
+  const centerX = slots[0].x;
+  const top = Math.min(...slots.map((slot) => slot.y));
+  const bottom = Math.max(...slots.map((slot) => slot.y));
+  const left = centerX - STACK_BLOCK.width / 2 - 16;
+  const right = centerX + STACK_BLOCK.width / 2 + 16;
+  const floor = bottom + STACK_BLOCK.height / 2 + 14;
+  const rim = top - STACK_BLOCK.height / 2 - 10;
+  const corner = 10;
+
+  scene.append(element('path', {
+    d: `M ${left} ${rim} `
+      + `L ${left} ${floor - corner} Q ${left} ${floor} ${left + corner} ${floor} `
+      + `L ${right - corner} ${floor} Q ${right} ${floor} ${right} ${floor - corner} `
+      + `L ${right} ${rim}`,
+    class: 'stack-guide',
+    fill: 'none',
+  }));
+}
+
 function drawEdgeBadge(group, x, y, value) {
   const text = String(value);
   const width = Math.max(24, text.length * 9 + 14);
@@ -165,7 +190,7 @@ function drawEdge(edge, positions, focus, treeEdge = false) {
   return group;
 }
 
-function drawNode(node, position, focusClass, isPointer = false) {
+function drawNode(node, position, focusClass, isPointer = false, stacked = false) {
   const classes = ['node'];
   if (focusClass) classes.push(focusClass);
   if (node.terminal) classes.push('is-terminal');
@@ -178,10 +203,25 @@ function drawNode(node, position, focusClass, isPointer = false) {
     'aria-label': `${node.tombstone ? 'deleted slot' : labelFor(node)}${node.dist !== undefined ? `, distance ${node.dist}` : ''}`,
     tabindex: '0',
   });
-  const width = position.width ?? (Array.isArray(node.keys) ? Math.max(88, node.keys.length * 44 + 16) : 54);
-  const height = position.height ?? 50;
+  const width = stacked
+    ? STACK_BLOCK.width
+    : position.width ?? (Array.isArray(node.keys) ? Math.max(88, node.keys.length * 44 + 16) : 54);
+  const height = stacked ? STACK_BLOCK.height : position.height ?? 50;
 
-  if (Array.isArray(node.keys)) {
+  if (stacked) {
+    group.append(element('rect', {
+      x: position.x - width / 2,
+      y: position.y - height / 2,
+      width,
+      height,
+      rx: String(STACK_BLOCK.radius),
+    }));
+    group.append(element('text', {
+      x: position.x,
+      y: position.y + 6,
+      class: 'node-label',
+    }, labelFor(node)));
+  } else if (Array.isArray(node.keys)) {
     group.append(element('rect', {
       x: position.x - width / 2,
       y: position.y - height / 2,
@@ -565,9 +605,12 @@ export function render(svg, state, positions = new Map(), step = {}) {
   }
 
   const treeEdges = Object.prototype.hasOwnProperty.call(state, 'root');
+  const stacked = state.orientation === 'vertical';
   const pointerIds = new Set(
     [state.top, state.head, state.tail].filter((id) => id !== null && id !== undefined),
   );
+
+  if (stacked) drawStackGuide(scene, positions);
 
   for (const edge of state.edges ?? []) {
     const drawn = drawEdge(edge, positions, focus, treeEdges);
@@ -578,12 +621,12 @@ export function render(svg, state, positions = new Map(), step = {}) {
     const position = positions.get(node.id);
     if (!position) continue;
     const className = focus.has(node.id) ? focusClass : '';
-    scene.append(drawNode(node, position, className, pointerIds.has(node.id)));
+    scene.append(drawNode(node, position, className, pointerIds.has(node.id), stacked));
     if (position.index !== undefined) {
       scene.append(element('text', {
-        x: position.x,
-        y: position.y + 52,
-        class: 'index-label',
+        x: stacked ? position.x - STACK_BLOCK.width / 2 - 22 : position.x,
+        y: stacked ? position.y : position.y + 52,
+        class: stacked ? 'index-label is-stacked' : 'index-label',
       }, `[${position.index}]`));
     }
   }
