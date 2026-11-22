@@ -9,6 +9,7 @@ import { isPrimaryActionKey, isPlaybackShortcut, pickPrimaryOperation } from './
 import {
   applySettings,
   createPayload,
+  createStructure,
   downloadJson,
   exportSvgPng,
   parsePayload,
@@ -41,6 +42,13 @@ const clearStructureButton = byId('clear-structure');
 const clearLogButton = byId('clear-log');
 const stageWrap = byId('stage-wrap');
 const importFileInput = byId('import-json');
+const jsonModal = byId('json-modal');
+const exportJsonText = byId('export-json-text');
+const importJsonText = byId('import-json-text');
+const copyStatus = byId('copy-status');
+const importStatus = byId('import-status');
+const tabExport = byId('tab-export');
+const tabImport = byId('tab-import');
 
 let current = null;
 let activeOperation = null;
@@ -295,21 +303,21 @@ function runOperation(name, operation) {
   animator.play();
 }
 
-function load(id) {
+function load(id, structure = null) {
   const entry = registry[id];
   if (!entry) return;
 
   animator.stop();
-  const structure = new entry.Structure();
-  structure.reset(structure.meta.demo ?? []);
-  current = { id, entry, structure };
+  const instance = structure ?? new entry.Structure();
+  instance.reset(instance.meta.demo ?? []);
+  current = { id, entry, structure: instance };
   activeOperation = null;
   stepCount = 0;
 
   if (window.location.hash !== `#/${id}`) window.location.hash = `#/${id}`;
-  title.textContent = structure.meta.title;
-  description.textContent = structure.meta.description;
-  svg.setAttribute('aria-label', `${structure.meta.title} visualization`);
+  title.textContent = instance.meta.title;
+  description.textContent = instance.meta.description;
+  svg.setAttribute('aria-label', `${instance.meta.title} visualization`);
   svg.classList.toggle('is-graph', id === 'graph');
 
   for (const button of nav.querySelectorAll('.structure-link')) {
@@ -319,7 +327,7 @@ function load(id) {
   buildToolbar();
   updateComplexity();
   clearLog();
-  appendLog(`Loaded ${structure.meta.title}.`, 'info');
+  appendLog(`Loaded ${instance.meta.title}.`, 'info');
   draw();
   fitSceneToViewport();
 }
@@ -340,7 +348,7 @@ fields.addEventListener('keydown', (event) => {
 });
 
 document.addEventListener('keydown', (event) => {
-  if (!isPlaybackShortcut(event) || !current) return;
+  if (!jsonModal.hidden || !isPlaybackShortcut(event) || !current) return;
   event.preventDefault();
   togglePlayback();
 });
@@ -425,31 +433,95 @@ byId('export-png').addEventListener('click', async () => {
   }
 });
 
-byId('export-json').addEventListener('click', () => {
-  if (!current) return;
-  downloadJson(createPayload(current.id, current.structure.getState()), current.id);
+function currentPayload() {
+  return current ? createPayload(current.id, current.structure.getState()) : null;
+}
+
+function setModalStatus(element, message, kind = '') {
+  element.textContent = message;
+  element.className = `modal-status${kind ? ` is-${kind}` : ''}`;
+}
+
+function setModalTab(tab) {
+  const exporting = tab === 'export';
+  tabExport.setAttribute('aria-selected', String(exporting));
+  tabImport.setAttribute('aria-selected', String(!exporting));
+  tabExport.tabIndex = exporting ? 0 : -1;
+  tabImport.tabIndex = exporting ? -1 : 0;
+  byId('panel-export').hidden = !exporting;
+  byId('panel-import').hidden = exporting;
+  setModalStatus(copyStatus, '');
+  setModalStatus(importStatus, '');
+}
+
+function openJsonModal() {
+  const payload = currentPayload();
+  if (!payload) return;
+  exportJsonText.value = JSON.stringify(payload, null, 2);
+  setModalTab('export');
+  jsonModal.hidden = false;
+  jsonModal.setAttribute('aria-hidden', 'false');
+  byId('copy-json').focus();
+}
+
+function closeJsonModal() {
+  if (jsonModal.hidden) return;
+  jsonModal.hidden = true;
+  jsonModal.setAttribute('aria-hidden', 'true');
+  byId('share-json').focus();
+}
+
+byId('share-json').addEventListener('click', openJsonModal);
+byId('modal-close').addEventListener('click', closeJsonModal);
+jsonModal.querySelector('[data-close-modal]').addEventListener('click', closeJsonModal);
+tabExport.addEventListener('click', () => setModalTab('export'));
+tabImport.addEventListener('click', () => setModalTab('import'));
+jsonModal.querySelector('.modal-tabs').addEventListener('keydown', (event) => {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  event.preventDefault();
+  const next = tabExport.getAttribute('aria-selected') === 'true' ? 'import' : 'export';
+  setModalTab(next);
+  (next === 'export' ? tabExport : tabImport).focus();
+});
+
+const COPY_LABEL = 'Copy to clipboard';
+let copyResetTimer = null;
+byId('copy-json').addEventListener('click', async () => {
+  const button = byId('copy-json');
+  try {
+    if (!navigator.clipboard?.writeText) {
+      throw new Error('Clipboard is not available in this browser.');
+    }
+    await navigator.clipboard.writeText(exportJsonText.value);
+    button.textContent = 'Copied!';
+    setModalStatus(copyStatus, 'JSON copied to the clipboard.', 'success');
+    clearTimeout(copyResetTimer);
+    copyResetTimer = setTimeout(() => { button.textContent = COPY_LABEL; }, 1500);
+  } catch (error) {
+    setModalStatus(copyStatus, `Copy failed: ${error.message ?? error}`, 'error');
+  }
+});
+
+byId('download-json').addEventListener('click', () => {
+  const payload = currentPayload();
+  if (!payload) return;
+  downloadJson(payload, current.id);
+  setModalStatus(copyStatus, `Downloaded structlab-${current.id}.json.`, 'success');
   appendLog(`Exported ${current.structure.meta.title} state as JSON.`, 'info');
 });
 
-byId('import-json-button').addEventListener('click', () => importFileInput.click());
-
-importFileInput.addEventListener('change', async (event) => {
-  const file = event.target.files?.[0];
-  event.target.value = '';
-  await importStateFile(file);
-});
-
-async function importStateFile(file) {
-  if (!file) return;
+function importStateText(text) {
   try {
-    const result = parsePayload(await readJsonFile(file), Object.keys(registry));
+    const result = parsePayload(text, Object.keys(registry));
     if (!result.ok) {
+      setModalStatus(importStatus, result.error, 'error');
       appendLog(`Import failed: ${result.error}`, 'miss');
-      return;
+      return false;
     }
 
     const { payload } = result;
-    load(payload.structure);
+    const structure = createStructure(payload.structure, registry, payload.settings ?? {});
+    load(payload.structure, structure);
     applySettings(current.structure, payload.structure, payload.settings ?? {});
     current.structure.restore(payload.data);
     activeOperation = null;
@@ -459,10 +531,32 @@ async function importStateFile(file) {
     appendLog(`Loaded ${current.structure.meta.title} from JSON.`, 'info');
     draw();
     fitSceneToViewport();
+    setModalStatus(importStatus, `${current.structure.meta.title} loaded successfully.`, 'success');
+    closeJsonModal();
+    return true;
   } catch (error) {
-    appendLog(`Import failed: ${error.message ?? error}`, 'miss');
+    const message = error.message ?? String(error);
+    setModalStatus(importStatus, `Import failed: ${message}`, 'error');
+    appendLog(`Import failed: ${message}`, 'miss');
+    return false;
   }
 }
+
+byId('load-json').addEventListener('click', () => importStateText(importJsonText.value));
+byId('select-json').addEventListener('click', () => importFileInput.click());
+
+importFileInput.addEventListener('change', async (event) => {
+  const file = event.target.files?.[0];
+  event.target.value = '';
+  if (!file) return;
+  try {
+    importStateText(await readJsonFile(file));
+  } catch (error) {
+    const message = error.message ?? String(error);
+    setModalStatus(importStatus, `Import failed: ${message}`, 'error');
+    appendLog(`Import failed: ${message}`, 'miss');
+  }
+});
 
 stageWrap.addEventListener('dragenter', (event) => {
   event.preventDefault();
@@ -484,7 +578,38 @@ stageWrap.addEventListener('drop', (event) => {
     appendLog('Import failed: drop a .json file over the viewer.', 'miss');
     return;
   }
-  importStateFile(file);
+  importStateFileViaDrag(file);
+});
+
+async function importStateFileViaDrag(file) {
+  try {
+    importStateText(await readJsonFile(file));
+  } catch (error) {
+    const message = error.message ?? String(error);
+    appendLog(`Import failed: ${message}`, 'miss');
+  }
+}
+
+document.addEventListener('keydown', (event) => {
+  if (jsonModal.hidden) return;
+  if (event.key === 'Escape') {
+    closeJsonModal();
+    return;
+  }
+  if (event.key !== 'Tab') return;
+
+  const focusable = [...jsonModal.querySelectorAll('button, textarea, input')]
+    .filter((element) => !element.disabled && element.offsetParent !== null);
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (event.shiftKey && document.activeElement === first) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && document.activeElement === last) {
+    event.preventDefault();
+    first.focus();
+  }
 });
 
 byId('theme-toggle').addEventListener('click', (event) => {

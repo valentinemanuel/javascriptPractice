@@ -21,7 +21,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
 - Hash table with four collision strategies, three hash functions and universal hashing.
 - Graph with directed/undirected and weighted/unweighted modes plus BFS, DFS and Dijkstra. Vertices can be dragged to rearrange the layout; Dijkstra accepts an optional target, highlights the selected shortest path and announces it in a banner. Traversals show their visit order the same way. Each vertex shows its current distance and directed arrows stop at the destination circle's edge. A compact legend explains the node-state colors.
-- Client-side export/import: **Export PNG** renders the fitted scene into a 2x canvas with embedded theme styles; **Export JSON** saves the canonical state plus settings; **Import JSON** accepts a picker or drag & drop and switches structures automatically.
+- Client-side export/import: **Export PNG** renders the fitted scene into a 2x canvas with embedded theme styles. **JSON / Share** opens a modal with Export / Copy (formatted JSON, clipboard button, file download) and Import / Paste (paste, file picker and drag & drop) tabs; imports validate the payload, switch structures automatically and re-fit the view.
 - Pure logic modules tested in Node with the built-in test runner.
 
 ## Structures
@@ -69,7 +69,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-315 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+316 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

@@ -51,24 +51,36 @@
 
       <section class="stage-panel">
         <div class="stage-header">
-          <div class="stage-kicker">VISUALIZATION</div>
-          <h2 id="structure-title">Loading…</h2>
-          <p id="structure-description"></p>
-          <p class="stage-hint">Use <strong>Play</strong> to animate, <strong>Step</strong> for one move. <strong>Enter</strong> runs the primary operation, <strong>Space</strong> toggles playback.</p>
-        </div>
-
-        <div class="viewer-tools" aria-label="Viewer controls">
-          <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
-          <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
-          <button id="reset-zoom" type="button" aria-label="Reset zoom and pan">Reset view</button>
-          <span class="tool-separator" aria-hidden="true"></span>
-          <button id="export-png" type="button" title="Export PNG" aria-label="Export PNG" class="tool-button">⇩ <span>PNG</span></button>
-          <button id="export-json" type="button" title="Export JSON" aria-label="Export JSON" class="tool-button">⇩ <span>JSON</span></button>
-          <button id="import-json-button" type="button" title="Import JSON" aria-label="Import JSON" class="tool-button">⇧ <span>JSON</span></button>
-          <input id="import-json" type="file" accept=".json,application/json" hidden>
+          <div class="stage-copy">
+            <div class="stage-kicker">VISUALIZATION</div>
+            <h2 id="structure-title">Loading…</h2>
+            <p id="structure-description"></p>
+            <p class="stage-hint">Use <strong>Play</strong> to animate, <strong>Step</strong> for one move. <strong>Enter</strong> runs the primary operation, <strong>Space</strong> toggles playback.</p>
+          </div>
+          <div class="stage-actions">
+            <button id="export-png" type="button" class="action-button" aria-label="Export PNG">
+              <svg class="action-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                <rect x="2.5" y="3.5" width="15" height="13" rx="2" />
+                <circle cx="7" cy="8" r="1.5" />
+                <path d="M3 14l4-4 3 3 3-4 4 5" />
+              </svg>
+              Export PNG
+            </button>
+            <button id="share-json" type="button" class="action-button" aria-label="JSON / Share">
+              <svg class="action-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                <path d="M7 5L3 10l4 5M13 5l4 5-4 5" />
+              </svg>
+              JSON / Share
+            </button>
+          </div>
         </div>
 
         <div id="stage-wrap" class="stage-wrap">
+          <div class="viewer-tools" aria-label="Viewer controls">
+            <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+            <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+            <button id="reset-zoom" type="button" aria-label="Reset zoom and pan">Reset view</button>
+          </div>
           <svg id="stage" role="img" aria-label="Data structure visualization"></svg>
           <div class="state-legend" aria-label="Node state colors">
             <span><i class="legend-dot is-visiting"></i>Visiting</span>
@@ -110,6 +122,42 @@
         <ol id="log" aria-live="polite"></ol>
       </aside>
     </main>
+
+    <div id="json-modal" class="modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="json-modal-title">
+      <div class="modal-backdrop" data-close-modal></div>
+      <div class="modal-panel" role="document">
+        <div class="modal-header">
+          <h2 id="json-modal-title">Share structure</h2>
+          <button id="modal-close" type="button" class="modal-close" aria-label="Close dialog">×</button>
+        </div>
+
+        <div class="modal-tabs" role="tablist" aria-label="JSON actions">
+          <button id="tab-export" type="button" role="tab" aria-selected="true" aria-controls="panel-export">Export / Copy</button>
+          <button id="tab-import" type="button" role="tab" aria-selected="false" aria-controls="panel-import" tabindex="-1">Import / Paste</button>
+        </div>
+
+        <section id="panel-export" class="modal-body" role="tabpanel" aria-labelledby="tab-export">
+          <p class="modal-hint">Copy this JSON to share the current structure, or download it as a file.</p>
+          <textarea id="export-json-text" class="json-area" readonly spellcheck="false" aria-label="Exported JSON"></textarea>
+          <div class="modal-actions">
+            <button id="copy-json" type="button" class="primary">Copy to clipboard</button>
+            <button id="download-json" type="button">Download .json</button>
+          </div>
+          <p id="copy-status" class="modal-status" role="status"></p>
+        </section>
+
+        <section id="panel-import" class="modal-body" role="tabpanel" aria-labelledby="tab-import" hidden>
+          <p class="modal-hint">Paste JSON from a message, or pick a file. StructLab switches to the right structure automatically.</p>
+          <textarea id="import-json-text" class="json-area" spellcheck="false" placeholder="Paste JSON here, e.g. {&quot;app&quot;:&quot;StructLab&quot;,&quot;version&quot;:1,&quot;structure&quot;:&quot;stack&quot;,&quot;data&quot;:{...}}" aria-label="JSON to import"></textarea>
+          <div class="modal-actions">
+            <button id="load-json" type="button" class="primary">Load JSON</button>
+            <button id="select-json" type="button">Select .json file</button>
+            <input id="import-json" type="file" accept=".json,application/json" hidden>
+          </div>
+          <p id="import-status" class="modal-status" role="status"></p>
+        </section>
+      </div>
+    </div>
 
     <script type="module" src="js/app.js"></script>
   </body>

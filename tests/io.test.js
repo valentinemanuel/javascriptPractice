@@ -118,6 +118,19 @@ test('a structure with an imported state keeps working', () => {
   assert.equal(restored.getState().size, 4);
 });
 
+test('a B-tree keeps a custom order after an import', () => {
+  const tree = new registry.btree.Structure(6);
+  for (const value of [1, 3, 5, 7, 9, 11]) run(tree.insert(value));
+  const payload = createPayload('btree', tree.getState());
+  assert.equal(payload.settings.order, 6);
+
+  const restored = createStructure('btree', registry, payload.settings);
+  restored.restore(payload.data);
+  assert.equal(restored.order, 6);
+  run(restored.insert(13));
+  assert.ok(restored.getState().nodes.some((node) => node.keys.includes(13)));
+});
+
 test('graph indexes survive a restore and still accept new vertices', () => {
   const graph = new registry.graph.Structure().reset();
   const payload = createPayload('graph', graph.getState());
