@@ -143,13 +143,13 @@ export const meta = {
       worst: { symbol: 'O(V+E)', text: 'every vertex and edge is visited' },
     },
     dijkstra: {
-      signature: 'dijkstra(start, target?)',
+      signature: 'dijkstra(start, target)',
       label: 'Dijkstra shortest paths',
       fields: [
         { name: 'start', label: 'Start', type: 'string', placeholder: 'e.g. A' },
-        { name: 'target', label: 'Target (optional)', type: 'string', placeholder: 'e.g. F', required: false },
+        { name: 'target', label: 'Target', type: 'string', placeholder: 'e.g. F (leave empty for all)', required: false },
       ],
-      description: 'Computes shortest weighted distances from the start vertex with a binary min-heap and reports every relaxation. All edge weights must be non-negative.',
+      description: 'Computes shortest weighted distances from the start vertex with a binary min-heap and reports every relaxation. When a target is supplied, its shortest path is highlighted and announced. All edge weights must be non-negative.',
       best: { symbol: 'Ω((V+E) log V)', text: 'the heap still orders every settled vertex' },
       average: { symbol: 'Θ((V+E) log V)', text: 'one push and pop per relaxation with logarithmic cost' },
       worst: {

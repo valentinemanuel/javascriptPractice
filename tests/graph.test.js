@@ -426,6 +426,7 @@ test('metadata declares signatures, fields and Omega/Theta/Big O bounds', () => 
   for (const [name, fields] of Object.entries(operations)) {
     const operation = meta.operations[name];
     assert.equal(typeof operation.signature, 'string', name);
+    assert.ok(!operation.signature.includes('?'), name);
     assert.equal(typeof operation.label, 'string', name);
     assert.equal(typeof operation.description, 'string', name);
     assert.deepEqual((operation.fields ?? []).map((field) => field.name), fields, name);
@@ -442,5 +443,7 @@ test('metadata declares signatures, fields and Omega/Theta/Big O bounds', () => 
 
   const weight = meta.operations.addEdge.fields.find((field) => field.name === 'weight');
   assert.equal(weight.required, false);
+  const target = meta.operations.dijkstra.fields.find((field) => field.name === 'target');
+  assert.equal(target.required, false);
   assert.match(meta.operations.dijkstra.worst.text, /O\(V²\)/);
 });
