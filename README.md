@@ -1,4 +1,4 @@
-# estructura
+# StructLab
 
 **Live demo:** https://valentinemanuel.github.io/javascriptPractice/
 
@@ -11,9 +11,10 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - 12 structures, each with its own operation toolbar and complexity table.
 - Step-by-step playback: play, pause, single step, speed control and reset.
 - Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges, rounded edge badges and FRONT/BACK / HEAD/TAIL markers on linear structures.
-- Hash tables use textbook-style diagrams: an array of indexed slots, linked chains drawn with arrows, numbered probe trails and the computed `h(key)` shown above the table.
+- Hash tables follow the classic diagram: keys on the left, a central **Hash Function** box and an **Index / Value** table on the right. Occupied, empty and tombstone rows are visually distinct, and probe attempts are numbered.
 - Persistent controls: the operation bar stays visible and the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
 - An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It never touches the structure SVG.
+- A 56px glassmorphism header with an inline three-node SVG mark, monospaced `12 Structures` / `Vanilla JS` badges, **Random data** and the theme toggle. Zoom controls (+ / − / Reset view) float over the viewer.
 - Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base.
 - Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
@@ -66,7 +67,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-267 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+275 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

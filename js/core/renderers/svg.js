@@ -270,20 +270,128 @@ function drawPointerLabels(scene, state, positions) {
   }
 }
 
+function hashCellText(bucket, chaining) {
+  const items = bucket.items ?? [];
+  if (items.length === 0) return '—';
+  if (!chaining) {
+    return items[0].tombstone ? '×' : String(items[0].value);
+  }
+  const values = items.slice(0, 3).map((item) => (item.tombstone ? '×' : String(item.value)));
+  return items.length > 3 ? `${values.join(' · ')}…` : values.join(' · ');
+}
+
 function drawHash(scene, state, positions, step, focus, focusClass) {
+  const table = positions.get('__table');
+  const hashBox = positions.get('__hash');
   const buckets = state.buckets ?? [];
-  if (buckets.length === 0) return;
+  if (!table || !hashBox || buckets.length === 0) return;
 
-  const placed = buckets.map((bucket) => positions.get(bucket.id)).filter(Boolean);
-  if (placed.length === 0) return;
-  const minX = Math.min(...placed.map((p) => p.x));
-  const maxX = Math.max(...placed.map((p) => p.x));
   const chaining = state.strategy === 'chaining';
-
-  scene.append(element('text', { x: minX - 40, y: 24, class: 'hash-hash-badge' },
-    `${chaining ? 'Separate chaining' : 'Open addressing'} · hash: ${state.hash}`));
-
   const payload = step.payload ?? {};
+  const keys = buckets.flatMap((bucket) => bucket.items ?? []);
+  const indexWidth = table.indexWidth;
+  const valueX = table.x + indexWidth;
+  const valueWidth = table.width - indexWidth;
+
+  // Keys flow into the hash function.
+  for (const key of keys) {
+    const position = positions.get(key.id);
+    if (!position) continue;
+    scene.append(element('line', {
+      x1: position.x + position.width / 2,
+      y1: position.y,
+      x2: hashBox.x - hashBox.width / 2,
+      y2: hashBox.y,
+      class: 'hash-key-arrow',
+      'marker-end': 'url(#arrowhead)',
+    }));
+  }
+
+  // The hash function points at the home slot and at every probe attempt.
+  const probes = Array.isArray(payload.probe) ? payload.probe.slice(0, 8) : [];
+  const targets = probes.length > 0
+    ? probes
+    : Number.isInteger(payload.index) ? [`bucket-${payload.index}`] : [];
+  targets.forEach((id, index) => {
+    const position = positions.get(id);
+    if (!position) return;
+    scene.append(element('line', {
+      x1: hashBox.x + hashBox.width / 2,
+      y1: hashBox.y,
+      x2: table.x,
+      y2: position.y,
+      class: probes.length > 1 ? 'hash-probe-arrow' : 'hash-hash-arrow',
+      'marker-end': probes.length > 1 ? 'url(#arrowhead-active)' : 'url(#arrowhead)',
+    }));
+    if (probes.length > 1) {
+      scene.append(element('circle', {
+        cx: table.x - 16,
+        cy: position.y,
+        r: 10,
+        class: 'hash-probe-badge-circle',
+      }));
+      scene.append(element('text', {
+        x: table.x - 16,
+        y: position.y + 4,
+        class: 'hash-probe-badge',
+      }, index + 1));
+    }
+  });
+
+  // Key boxes.
+  if (keys.length === 0) {
+    scene.append(element('text', {
+      x: positions.get('__keys')?.x ?? 116,
+      y: table.y + 20,
+      class: 'hash-empty-hint',
+    }, 'No keys yet — insert one to see its path.'));
+  }
+  for (const key of keys) {
+    const position = positions.get(key.id);
+    if (!position) continue;
+    const group = element('g', {
+      class: `hash-key${focus.has(key.id) ? ` ${focusClass}` : ''}`,
+      'data-id': key.id,
+    });
+    group.append(element('rect', {
+      x: position.x - position.width / 2,
+      y: position.y - position.height / 2,
+      width: position.width,
+      height: position.height,
+      rx: '8',
+    }));
+    group.append(element('text', {
+      x: position.x,
+      y: position.y + 5,
+      class: 'hash-key-text',
+    }, key.tombstone ? '×' : String(key.value)));
+    scene.append(group);
+  }
+  scene.append(element('text', {
+    x: positions.get('__keys')?.x ?? 116,
+    y: table.y - 24,
+    class: 'hash-column-title',
+  }, 'KEYS'));
+
+  // Hash function box.
+  const functionGroup = element('g', { class: 'hash-function-box' });
+  functionGroup.append(element('rect', {
+    x: hashBox.x - hashBox.width / 2,
+    y: hashBox.y - hashBox.height / 2,
+    width: hashBox.width,
+    height: hashBox.height,
+    rx: '12',
+  }));
+  functionGroup.append(element('text', {
+    x: hashBox.x,
+    y: hashBox.y - 12,
+    class: 'hash-function-title',
+  }, 'Hash Function'));
+  functionGroup.append(element('text', {
+    x: hashBox.x,
+    y: hashBox.y + 9,
+    class: 'hash-function-meta',
+  }, `${state.hash} · ${chaining ? 'chaining' : state.strategy}`));
   const firstProbe = Array.isArray(payload.probe) ? payload.probe[0] : undefined;
   const homeIndex = step.type === 'hash'
     ? payload.index
@@ -291,104 +399,59 @@ function drawHash(scene, state, positions, step, focus, focusClass) {
       ? Number(String(firstProbe).replace('bucket-', ''))
       : undefined;
   if (payload.key !== undefined && Number.isFinite(homeIndex)) {
-    let detail = `h(${payload.key}) = ${homeIndex}`;
-    if (step.type === 'hash' && state.hash === 'universal') {
-      detail += `   a=${payload.a}  b=${payload.b}  p=${payload.p}`;
-    } else if (step.type === 'hash' && state.hash === 'multiplication') {
-      detail += `   A≈${Number(payload.a).toFixed(3)}`;
-    }
-    scene.append(element('text', { x: minX - 40, y: 46, class: 'hash-hash-sub' }, detail));
+    functionGroup.append(element('text', {
+      x: hashBox.x,
+      y: hashBox.y + 28,
+      class: 'hash-function-result',
+    }, `h(${payload.key}) = ${homeIndex}`));
   }
-  if (step.type === 'rehash' && payload.from !== undefined) {
-    scene.append(element('text', { x: maxX + 46, y: 24, class: 'hash-hash-badge' },
-      `Rehash ${payload.from} → ${payload.to}`));
-  }
+  scene.append(functionGroup);
 
-  for (const bucket of buckets) {
+  // Table header.
+  const headerY = table.y - 24;
+  const header = element('g', { class: 'hash-table-header' });
+  header.append(element('rect', { x: table.x, y: headerY - 14, width: indexWidth, height: 24, rx: '6' }));
+  header.append(element('rect', { x: valueX, y: headerY - 14, width: valueWidth, height: 24, rx: '6' }));
+  header.append(element('text', { x: table.x + indexWidth / 2, y: headerY + 2, class: 'hash-header-text' }, 'Index'));
+  header.append(element('text', { x: valueX + valueWidth / 2, y: headerY + 2, class: 'hash-header-text' }, 'Value'));
+  scene.append(header);
+
+  // Index / Value rows.
+  buckets.forEach((bucket) => {
     const position = positions.get(bucket.id);
-    if (!position) continue;
-    const className = focus.has(bucket.id) ? ` ${focusClass}` : '';
-    const group = element('g', { class: `hash-slot${className}`, 'data-id': bucket.id });
-
-    group.append(element('rect', {
-      x: position.x - position.width / 2,
-      y: position.y - position.height / 2,
-      width: position.width,
-      height: position.height,
-      rx: '6',
-    }));
-
-    const indexBadge = element('g', { class: 'hash-index-badge' });
-    indexBadge.append(element('rect', {
-      x: position.x - 18,
-      y: position.y - position.height / 2 - 28,
-      width: 36,
-      height: 18,
-      rx: '5',
-    }));
-    indexBadge.append(element('text', {
-      x: position.x,
-      y: position.y - position.height / 2 - 15,
-      class: 'hash-index',
-    }, `[${bucket.id.replace('bucket-', '')}]`));
-    group.append(indexBadge);
-
-    if (!chaining) {
-      const item = bucket.items?.[0];
-      group.append(element('text', {
-        x: position.x,
-        y: position.y + 6,
-        class: `hash-value${item?.tombstone ? ' is-tombstone' : ''}`,
-      }, item ? (item.tombstone ? '×' : String(item.value)) : '—'));
-    } else if ((bucket.items?.length ?? 0) === 0) {
-      group.append(element('text', { x: position.x, y: position.y + 5, class: 'hash-index' }, 'empty'));
-    }
-    scene.append(group);
-
+    if (!position) return;
     const items = bucket.items ?? [];
-    if (chaining && items.length > 0) {
-      let previous = { x: position.x + position.width / 2, y: position.y };
-      items.forEach((item) => {
-        const itemPosition = positions.get(item.id);
-        if (!itemPosition) return;
-        scene.append(element('line', {
-          x1: previous.x,
-          y1: previous.y,
-          x2: itemPosition.x - 20,
-          y2: itemPosition.y,
-          class: 'hash-chain-line',
-          'marker-end': 'url(#arrowhead)',
-        }));
-        scene.append(drawNode(item, itemPosition, focus.has(item.id) ? focusClass : ''));
-        previous = { x: itemPosition.x + 20, y: itemPosition.y };
-      });
-    }
-  }
-
-  const probe = payload.probe ?? [];
-  const badges = probe.map((id) => positions.get(id)).filter(Boolean);
-  badges.forEach((position, index) => {
-    if (index > 0) {
-      scene.append(element('line', {
-        x1: badges[index - 1].x + 46,
-        y1: badges[index - 1].y - 34,
-        x2: position.x + 46,
-        y2: position.y - 34,
-        class: 'hash-probe-line',
-      }));
-    }
-    scene.append(element('circle', {
-      cx: position.x + 46,
-      cy: position.y - 34,
-      r: 11,
-      class: 'hash-probe-badge-circle',
-    }));
-    scene.append(element('text', {
-      x: position.x + 46,
-      y: position.y - 30,
-      class: 'hash-probe-badge',
-    }, index + 1));
+    const live = items.filter((item) => !item.tombstone).length;
+    const slotState = live > 0 ? 'is-occupied'
+      : items.length > 0 ? 'is-tombstone' : 'is-empty';
+    const className = focus.has(bucket.id) ? ` ${focusClass}` : '';
+    const row = element('g', {
+      class: `hash-row ${slotState}${className}`,
+      'data-id': bucket.id,
+    });
+    const top = position.y - position.height / 2;
+    row.append(element('rect', { x: table.x, y: top, width: indexWidth, height: position.height }));
+    row.append(element('rect', { x: valueX, y: top, width: valueWidth, height: position.height }));
+    row.append(element('text', {
+      x: table.x + indexWidth / 2,
+      y: position.y + 4,
+      class: 'hash-row-index',
+    }, String(position.index)));
+    row.append(element('text', {
+      x: valueX + valueWidth / 2,
+      y: position.y + 4,
+      class: 'hash-row-value',
+    }, hashCellText(bucket, chaining)));
+    scene.append(row);
   });
+
+  if (step.type === 'rehash' && payload.from !== undefined) {
+    scene.append(element('text', {
+      x: table.x + table.width,
+      y: table.y - 24,
+      class: 'hash-hash-badge',
+    }, `Rehash ${payload.from} → ${payload.to}`));
+  }
 }
 
 export function render(svg, state, positions = new Map(), step = {}) {

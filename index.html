@@ -11,15 +11,27 @@
   <body>
     <header class="topbar">
       <div class="brand">
-        <img class="brand-icon" src="favicon.svg" alt="" aria-hidden="true">
+        <svg class="brand-icon" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <g class="brand-links">
+            <path d="M16 18 L46 32 M16 18 L16 46 M16 46 L46 32" />
+          </g>
+          <g class="brand-nodes">
+            <circle cx="16" cy="18" r="7" />
+            <circle cx="46" cy="32" r="7" />
+            <circle cx="16" cy="46" r="7" />
+          </g>
+        </svg>
         <div class="brand-copy">
-          <h1>estructura</h1>
-          <span class="tagline">Interactive Data Structures Visualizer · 12 structures · vanilla JS</span>
+          <h1>StructLab</h1>
+        </div>
+        <div class="header-badges">
+          <span class="header-badge"><span id="header-structure-count">12</span> Structures</span>
+          <span class="header-badge">Vanilla JS</span>
         </div>
       </div>
       <div class="top-actions">
+        <button id="random-data" type="button" aria-label="Load random data into the current structure">⚄ Random data</button>
         <button id="theme-toggle" type="button" aria-label="Toggle color theme">☾ Dark</button>
-        <button id="reset-zoom" type="button" aria-label="Reset zoom and pan">Reset view</button>
       </div>
     </header>
 
@@ -36,6 +48,12 @@
           <h2 id="structure-title">Loading…</h2>
           <p id="structure-description"></p>
           <p class="stage-hint">Use <strong>Play</strong> to animate, <strong>Step</strong> to advance one move at a time.</p>
+        </div>
+
+        <div class="viewer-tools" aria-label="Viewer controls">
+          <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
+          <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
+          <button id="reset-zoom" type="button" aria-label="Reset zoom and pan">Reset view</button>
         </div>
 
         <div class="stage-wrap">

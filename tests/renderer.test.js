@@ -2,6 +2,12 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registry } from '../js/registry.js';
 import { render } from '../js/core/renderers/svg.js';
+import { HashTable } from '../js/structures/hash-table.js';
+import { compute as computeHashLayout } from '../js/core/layout/hash.js';
+
+function drain(iterator) {
+  for (const _step of iterator) { /* apply without animating */ }
+}
 
 class FakeNode {
   constructor(name) {
@@ -50,6 +56,18 @@ function withClass(nodes, className) {
   return nodes.filter((node) => (node.attributes.class ?? '').split(' ').includes(className));
 }
 
+function withClasses(nodes, ...classNames) {
+  return nodes.filter((node) => classNames.every(
+    (className) => (node.attributes.class ?? '').split(' ').includes(className),
+  ));
+}
+
+function drawHashState(state, step) {
+  const svg = new FakeNode('svg');
+  render(svg, state, computeHashLayout(state, { width: 900, height: 560 }), step);
+  return all(svg);
+}
+
 test('defs expose gradients, glow filter and both arrow markers', () => {
   const defs = draw('bst').querySelector('defs');
   assert.ok(defs, 'a defs block must be injected into the svg');
@@ -95,14 +113,49 @@ test('terminal trie nodes get concentric thin rings and pointers are marked', ()
   assert.equal(withClass(queueNodes, 'is-pointer').length, 2);
 });
 
-test('hash slots use rx=6 and a separated index badge', () => {
+test('hash diagram draws keys, a hash box and an Index/Value table', () => {
   const nodes = all(draw('hash-table'));
-  const slots = withClass(nodes, 'hash-slot');
-  assert.ok(slots.length > 0);
-  for (const slot of slots) {
-    assert.equal(slot.children[0].attributes.rx, '6');
-  }
-  assert.equal(withClass(nodes, 'hash-index-badge').length, slots.length);
+  assert.ok(withClass(nodes, 'hash-key').length > 0);
+  assert.equal(withClass(nodes, 'hash-function-box').length, 1);
+  assert.equal(withClass(nodes, 'hash-table-header').length, 1);
+  const rows = withClass(nodes, 'hash-row');
+  assert.ok(rows.length > 0);
+  assert.ok(rows.every((row) => row.children.some(
+    (child) => (child.attributes.class ?? '').includes('hash-row-index'),
+  )));
+});
+
+test('hash rows distinguish occupied, empty and tombstone slots', () => {
+  const table = new HashTable().reset();
+  drain(table.useLinearProbing());
+  for (const value of [1, 8]) drain(table.put(value));
+
+  let nodes = drawHashState(table.getState(), { type: 'hash', payload: {} });
+  assert.ok(withClasses(nodes, 'hash-row', 'is-occupied').length > 0);
+  assert.ok(withClasses(nodes, 'hash-row', 'is-empty').length > 0);
+  assert.equal(withClass(nodes, 'hash-key-arrow').length, 2);
+
+  drain(table.remove(1));
+  nodes = drawHashState(table.getState(), { type: 'hash', payload: {} });
+  assert.ok(withClasses(nodes, 'hash-row', 'is-tombstone').length > 0);
+});
+
+test('probe steps draw numbered arrows from the hash function', () => {
+  const table = new HashTable().reset();
+  drain(table.useLinearProbing());
+  for (const value of [1, 8]) drain(table.put(value));
+  const steps = [...table.put(15)];
+  const probeStep = steps.filter((step) => step.type === 'probe').at(-1);
+  assert.ok(probeStep);
+
+  const nodes = drawHashState(table.getState(), probeStep);
+  assert.ok(withClass(nodes, 'hash-probe-arrow').length > 0);
+  const badges = withClass(nodes, 'hash-probe-badge');
+  assert.equal(badges.length, probeStep.payload.probe.length);
+  assert.equal(badges[0].textContent, '1');
+
+  const hashResult = nodes.find((node) => node.attributes.class === 'hash-function-result');
+  assert.equal(hashResult.textContent, `h(${probeStep.payload.key}) = 1`);
 });
 
 test('the scene transform survives repeated renders', () => {

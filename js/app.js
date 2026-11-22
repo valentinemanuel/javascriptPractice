@@ -3,6 +3,7 @@ import { Animator } from './core/Animator.js';
 import { render } from './core/renderers/svg.js';
 import { renderComplexity } from './core/complexity.js';
 import { initBackground } from './ui/background.js';
+import { applyRandomData } from './ui/random-data.js';
 
 const byId = (id) => document.getElementById(id);
 const svg = byId('stage');
@@ -14,6 +15,7 @@ const configurationButtons = byId('configuration-buttons');
 const configDetails = byId('config-details');
 const complexityToggle = byId('complexity-toggle');
 const structureCount = byId('structure-count');
+const headerStructureCount = byId('header-structure-count');
 const complexityPanel = byId('complexity');
 const logList = byId('log');
 const fields = byId('fields');
@@ -151,7 +153,9 @@ function readFields(operation) {
 
 function buildNav() {
   nav.replaceChildren();
-  structureCount.textContent = String(Object.keys(registry).length);
+  const count = String(Object.keys(registry).length);
+  structureCount.textContent = count;
+  headerStructureCount.textContent = count;
   const groups = new Map();
   for (const [id, entry] of Object.entries(registry)) {
     const group = entry.group ?? 'Other';
@@ -271,11 +275,30 @@ complexityToggle.addEventListener('click', () => {
   updateComplexity();
 });
 
+function setZoom(factor) {
+  zoom = Math.min(2.5, Math.max(0.4, zoom * factor));
+  applyTransform();
+}
+
+byId('zoom-in').addEventListener('click', () => setZoom(1.2));
+byId('zoom-out').addEventListener('click', () => setZoom(1 / 1.2));
+
 byId('reset-zoom').addEventListener('click', () => {
   zoom = 1;
   panX = 0;
   panY = 0;
   applyTransform();
+});
+
+byId('random-data').addEventListener('click', () => {
+  if (!current) return;
+  animator.stop();
+  applyRandomData(current.structure, current.id);
+  activeOperation = null;
+  updateComplexity();
+  clearLog();
+  appendLog('Loaded a fresh random dataset.', 'info');
+  draw();
 });
 
 byId('theme-toggle').addEventListener('click', (event) => {

@@ -355,18 +355,29 @@ test('metadata declares Omega, Theta, Big O and key fields', () => {
   assert.ok(meta.description.includes('expected O(1)'));
 });
 
+test('the hash layout keeps a position for tombstone items', () => {
+  const table = build('linear', 'modulo', [1, 8]);
+  run(table.remove(1));
+  const tombstone = table.getState().buckets
+    .flatMap((bucket) => bucket.items)
+    .find((item) => item.tombstone);
+  assert.ok(tombstone, 'a logical deletion must leave a tombstone');
+  const positions = computeHashLayout(table.getState(), { width: 900, height: 560 });
+  assert.ok(positions.has(tombstone.id));
+});
+
 test('the hash layout produces textbook slot and chain positions', () => {
   const chaining = build('chaining', 'modulo', [1, 8, 15]);
   const chained = computeHashLayout(chaining.getState(), { width: 900, height: 560 });
+  assert.ok(chained.has('__hash'), 'the hash function box must have a position');
+  assert.ok(chained.has('__table'), 'the Index/Value table must have a position');
   for (const bucket of chaining.getState().buckets) {
-    assert.ok(chained.has(bucket.id), `bucket ${bucket.id} must have a slot position`);
-    const slot = chained.get(bucket.id);
-    assert.ok(slot.width > 0);
-    assert.ok(slot.x - slot.width / 2 >= 0, `${bucket.id} must not be clipped on the left`);
-    assert.ok(slot.x + slot.width / 2 <= 900, `${bucket.id} must not be clipped on the right`);
+    assert.ok(chained.has(bucket.id), `bucket ${bucket.id} must have a table row`);
+    const row = chained.get(bucket.id);
+    assert.ok(row.x + row.width / 2 <= 900, `${bucket.id} must not be clipped`);
     for (const item of bucket.items) {
-      assert.ok(chained.has(item.id), `item ${item.id} must have a chain position`);
-      assert.ok(chained.get(item.id).x > chained.get(bucket.id).x, 'chain nodes sit right of the slot');
+      assert.ok(chained.has(item.id), `item ${item.id} must have a key position`);
+      assert.ok(chained.get(item.id).x < row.x, 'keys are drawn left of the table');
     }
   }
 
@@ -374,11 +385,8 @@ test('the hash layout produces textbook slot and chain positions', () => {
   const probed = computeHashLayout(probing.getState(), { width: 900, height: 560 });
   for (const bucket of probing.getState().buckets) {
     for (const item of bucket.items) {
-      assert.deepEqual(
-        { x: probed.get(item.id).x, y: probed.get(item.id).y },
-        { x: probed.get(bucket.id).x, y: probed.get(bucket.id).y },
-        'open-addressing keys are stored inside their slot',
-      );
+      assert.ok(probed.has(item.id));
+      assert.ok(probed.get(item.id).x < probed.get(bucket.id).x);
     }
   }
 });
