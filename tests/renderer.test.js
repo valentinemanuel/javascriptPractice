@@ -305,6 +305,23 @@ test('linked list keeps circular nodes and HEAD/TAIL labels', () => {
   assert.equal(withClass(nodes, 'pointer-arrow').length, 0);
 });
 
+test('multi-key nodes show their 2t-1 capacity and other trees do not', () => {
+  const tree = new registry.btree.Structure(8).reset([1, 2, 3, 4, 5]);
+  const state = tree.getState();
+  const svg = new FakeNode('svg');
+  render(svg, state, registry.btree.layout(state, { width: 900, height: 560 }), {});
+
+  const badges = withClass(all(svg), 'node-capacity');
+  assert.ok(badges.length > 0);
+  assert.ok(badges.every((badge) => /\d+\/\d+$/.test(badge.textContent)));
+  assert.ok(badges.some((badge) => badge.textContent.endsWith('/7')));
+
+  const trie = new registry.trie.Structure().reset(['car']);
+  const trieSvg = new FakeNode('svg');
+  render(trieSvg, trie.getState(), registry.trie.layout(trie.getState(), { width: 900, height: 560 }), {});
+  assert.equal(withClass(all(trieSvg), 'node-capacity').length, 0);
+});
+
 test('multi-key tree edges start at their own separator', () => {
   const structure = new registry.btree.Structure().reset(registry.btree.Structure.meta.demo);
   const state = structure.getState();

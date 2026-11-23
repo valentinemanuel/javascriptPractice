@@ -292,7 +292,7 @@ function drawEdge(edge, positions, focus, treeEdge = false, fromX = null) {
   return group;
 }
 
-function drawNode(node, position, focusClass, isPointer = false, variant = 'circle', labelOverride = null) {
+function drawNode(node, position, focusClass, isPointer = false, variant = 'circle', labelOverride = null, capacity = null) {
   const displayLabel = labelOverride ?? labelFor(node);
   const classes = ['node'];
   if (focusClass) classes.push(focusClass);
@@ -361,6 +361,13 @@ function drawNode(node, position, focusClass, isPointer = false, variant = 'circ
         class: 'node-label',
       }, key));
     });
+    if (capacity !== null) {
+      group.append(element('text', {
+        x: position.x + width / 2,
+        y: position.y - height / 2 - 8,
+        class: 'node-capacity',
+      }, `${node.keys.length}/${capacity}`));
+    }
   } else {
     group.append(element('circle', { cx: position.x, cy: position.y, r: position.radius ?? 26 }));
     group.append(element('text', {
@@ -846,12 +853,13 @@ export function render(svg, state, positions = new Map(), step = {}, viewport = 
   if (multiKey) drawLeafLinks(scene, state, positions, focus, focusClass);
 
   const variant = stacked ? 'stack' : queue ? 'queue' : array ? 'array' : 'circle';
+  const capacity = Number.isInteger(state.order) && multiKey ? state.order - 1 : null;
   for (const node of nodes) {
     const position = positions.get(node.id);
     if (!position) continue;
     const className = focus.has(node.id) ? focusClass : '';
     const labelOverride = node.id === trieRoot ? 'Ø' : null;
-    scene.append(drawNode(node, position, className, pointerIds.has(node.id), variant, labelOverride));
+    scene.append(drawNode(node, position, className, pointerIds.has(node.id), variant, labelOverride, capacity));
     if (position.index !== undefined) {
       scene.append(element('text', {
         x: stacked ? position.x - STACK_BLOCK.width / 2 - 22 : position.x,

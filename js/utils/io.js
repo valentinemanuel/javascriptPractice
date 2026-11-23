@@ -171,6 +171,7 @@ svg{${declarations}font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",
 .node .node-label{fill:var(--text);font-size:15px;font-weight:700;text-anchor:middle}
 .node .distance-label,.index-label{fill:var(--muted);font-size:11px;text-anchor:middle}
 .node .key-divider{stroke:var(--border);stroke-width:1}
+.node-capacity{fill:var(--muted);font-size:10px;text-anchor:end}
 .node.is-visited circle:not(.terminal-ring),.node.is-visited rect{stroke:var(--compare);fill:rgba(242,204,96,0.1)}
 .node.is-focus circle:not(.terminal-ring),.node.is-focus rect,
 .node.is-visiting circle:not(.terminal-ring),.node.is-visiting rect{fill:url(#node-grad-active)}

@@ -130,6 +130,7 @@ test('file names, view boxes and embedded styles are deterministic', () => {
   const styles = buildSvgStyles({ '--accent': '#58a6ff', '--text': '#fff' });
   assert.match(styles, /--accent:#58a6ff/);
   assert.match(styles, /\.node \.node-label/);
+  assert.match(styles, /\.node-capacity/);
   assert.match(styles, /node-grad-default/);
 });
 

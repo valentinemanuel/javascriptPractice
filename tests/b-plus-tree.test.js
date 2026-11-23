@@ -185,6 +185,20 @@ test('changing the degree rebuilds the tree and keeps the leaf chain', () => {
   validateStructure(tree);
 });
 
+test('a leaf holds 2t-1 keys before splitting when t is 4', () => {
+  const tree = new BPlusTree();
+  assert.equal(run(tree.useDegree(4)), 8);
+  assert.equal(tree._maxKeys(), 7);
+
+  for (let key = 1; key <= 7; key += 1) run(tree.insert(key));
+  const counts = tree.getState().nodes.filter((node) => node.leaf).map((node) => node.keys.length);
+  assert.ok(counts.includes(7), `expected a leaf with 7 keys, got [${counts.join(', ')}]`);
+  validateStructure(tree);
+
+  run(tree.insert(8));
+  validateStructure(tree);
+});
+
 test('degree changes clamp to a minimum degree of two and an even order', () => {
   const tree = new BPlusTree().seed([1, 2, 3]);
   assert.equal(run(tree.useDegree(1)), 4);

@@ -391,6 +391,20 @@ test('changing the degree rebuilds the tree and preserves every key', () => {
   assertInvariants(tree);
 });
 
+test('a node holds 2t-1 keys before splitting when t is 4', () => {
+  const tree = new BTree();
+  assert.equal(run(tree.useDegree(4)).value, 8);
+  assert.equal(tree.maxKeys, 7);
+
+  for (let key = 1; key <= 7; key += 1) run(tree.insert(key));
+  const counts = tree.getState().nodes.map((node) => node.keys.length);
+  assert.ok(counts.includes(7), `expected a node with 7 keys, got [${counts.join(', ')}]`);
+  assertInvariants(tree);
+
+  run(tree.insert(8));
+  assertInvariants(tree);
+});
+
 test('degree changes clamp to a minimum degree of two and an even order', () => {
   const tree = new BTree().seed([1, 2, 3]);
   assert.equal(run(tree.useDegree(1)).value, 4);
