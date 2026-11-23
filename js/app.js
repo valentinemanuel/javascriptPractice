@@ -93,8 +93,8 @@ function positionEdgeToggles() {
   } else {
     const leftRect = layout.querySelector('.sidebar').getBoundingClientRect();
     const rightRect = layout.querySelector('.info-panel').getBoundingClientRect();
-    toggleLeft.style.left = `${Math.max(4, leftRect.right - layoutRect.left - 13)}px`;
-    toggleRight.style.right = `${Math.max(4, layoutRect.right - rightRect.left - 13)}px`;
+    toggleLeft.style.left = `${Math.max(4, leftRect.right - layoutRect.left - 11)}px`;
+    toggleRight.style.right = `${Math.max(4, layoutRect.right - rightRect.left - 11)}px`;
   }
 }
 
@@ -499,7 +499,7 @@ byId('export-png').addEventListener('click', async () => {
     const variables = themeVariables();
     await exportSvgPng(svg, current.id, {
       variables,
-      background: variables['--bg'] ?? '#0d1117',
+      background: variables['--bg'] ?? '#090a0f',
     });
     appendLog(`Exported ${current.structure.meta.title} as a PNG image.`, 'info');
   } catch (error) {

@@ -161,8 +161,8 @@ export function buildSvgStyles(variables = {}) {
     .join('');
   return `
 svg{${declarations}font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}
-.grad-default-1{stop-color:var(--grad-default-1,#33445a)}
-.grad-default-2{stop-color:var(--grad-default-2,#151b23)}
+.grad-default-1{stop-color:var(--grad-default-1,#2a2e38)}
+.grad-default-2{stop-color:var(--grad-default-2,#11131a)}
 .grad-active-1{stop-color:var(--grad-active-1,#79c0ff)}
 .grad-active-2{stop-color:var(--grad-active-2,#1f5f9e)}
 .grad-found-1{stop-color:var(--grad-found-1,#56d364)}
@@ -287,7 +287,7 @@ export async function exportSvgPng(svg, id, options = {}) {
   background.setAttribute('y', String(view.y));
   background.setAttribute('width', String(view.width));
   background.setAttribute('height', String(view.height));
-  background.setAttribute('fill', options.background ?? '#0d1117');
+  background.setAttribute('fill', options.background ?? '#090a0f');
   if (clone.firstChild) clone.insertBefore(background, clone.firstChild.nextSibling);
   else clone.prepend(background);
 
