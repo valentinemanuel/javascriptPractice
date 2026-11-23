@@ -15,8 +15,8 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - Hash tables use a three-stage left-to-right diagram: an **Input Key** card, a **Hash Function** block showing the live calculation (`25 mod 7 = 4`) and a vertical **Index / Value** table. A curved arrow points to the resulting row, chaining nodes hang off that row, and probe attempts are numbered and animated.
 - Persistent controls: the floating bottom dock can be collapsed from its chevron tab or with **H**, freeing the full viewer height for fitting; the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
 - An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It never touches the structure SVG.
-- A 56px glassmorphism header with a theme-aware three-node SVG badge, monospaced `12 Structures` / `Vanilla JS` badges and the theme toggle. **Random data**, **Clear**, **Export PNG** and **JSON / Share** live together in the stage actions. Zoom controls (+ / − / Reset view) float over the viewer, and Reset view re-fits the structure automatically.
-- Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base. Both sidebars fold from their own edge handles, independently. Both states persist in `localStorage`, start collapsed below 1024px, and re-fit the camera when the transition ends; the visualization panel stays always visible.
+- A 56px glassmorphism header with a theme-aware three-node SVG badge, monospaced `12 Structures` / `Vanilla JS` badges and the theme toggle. **Random data**, **Clear**, **Export PNG** and **JSON / Share** live together in the stage actions. Zoom controls (+ / − / Reset view) float over the viewer, and Reset view re-fits the structure automatically. The SVG supports touch panning with one finger and pinch zoom with two, centred on the pinch midpoint and clamped to the same 0.4×–2.5× range as the zoom buttons.
+- Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base. Both sidebars fold from their own edge handles; on screens up to 1024px they are mutually exclusive (opening one closes the other) and start collapsed. At phone widths the toggles sit side by side in a two-column grid with the active one highlighted. Both states persist in `localStorage` and re-fit the camera when the transition ends; the visualization panel stays always visible.
 - Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
 - Hash table with four collision strategies, three hash functions and universal hashing.
@@ -69,7 +69,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-334 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+335 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

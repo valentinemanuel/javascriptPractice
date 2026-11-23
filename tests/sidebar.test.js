@@ -5,6 +5,7 @@ import {
   LEFT_KEY,
   RIGHT_KEY,
   initialSidebarState,
+  nextSidebarState,
   readDockVisible,
   readSidebarVisibility,
   sidebarClasses,
@@ -44,9 +45,25 @@ test('collapsed classes are derived from each sidebar independently', () => {
   assert.equal(sidebarClasses({ left: false, right: false }), 'layout left-collapsed right-collapsed');
 });
 
+test('opening one sidebar closes the other on small screens only', () => {
+  const bothOpen = { left: true, right: true };
+  assert.deepEqual(nextSidebarState(bothOpen, 'left'), { left: false, right: true });
+  assert.deepEqual(nextSidebarState(bothOpen, 'left', true), { left: false, right: true });
+
+  const bothClosed = { left: false, right: false };
+  assert.deepEqual(nextSidebarState(bothClosed, 'left'), { left: true, right: false });
+  assert.deepEqual(nextSidebarState(bothClosed, 'left', true), { left: true, right: false });
+  assert.deepEqual(nextSidebarState(bothClosed, 'right', true), { left: false, right: true });
+
+  const leftOpen = { left: true, right: false };
+  assert.deepEqual(nextSidebarState(leftOpen, 'right', true), { left: false, right: true });
+  assert.deepEqual(nextSidebarState(leftOpen, 'right'), { left: true, right: true });
+});
+
 test('small screens start collapsed without overwriting saved preferences', () => {
   const storage = fakeStorage({ [LEFT_KEY]: 'true', [RIGHT_KEY]: 'true' });
   assert.deepEqual(initialSidebarState(storage, 1440), { left: true, right: true });
+  assert.deepEqual(initialSidebarState(storage, 1024), { left: false, right: false });
   assert.deepEqual(initialSidebarState(storage, 1023), { left: false, right: false });
   assert.equal(storage.getItem(LEFT_KEY), 'true');
   assert.equal(storage.getItem(RIGHT_KEY), 'true');

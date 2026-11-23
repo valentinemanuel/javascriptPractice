@@ -39,7 +39,16 @@ export function writeDockVisible(storage, visible) {
 /** Small screens start with both sidebars folded, without overwriting the saved preference. */
 export function initialSidebarState(storage, width = 1440) {
   const state = readSidebarVisibility(storage);
-  return width < 1024 ? { ...state, left: false, right: false } : state;
+  return width <= 1024 ? { ...state, left: false, right: false } : state;
+}
+
+/** Opens one sidebar and, on small screens, folds the other one. */
+export function nextSidebarState(state, side, mutuallyExclusive = false) {
+  const next = { ...state, [side]: !state[side] };
+  if (mutuallyExclusive && next[side]) {
+    next[side === 'left' ? 'right' : 'left'] = false;
+  }
+  return next;
 }
 
 export function writeSidebarVisibility(storage, state) {

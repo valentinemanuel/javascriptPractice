@@ -15,6 +15,7 @@ import {
 } from './core/shortcuts.js';
 import {
   initialSidebarState,
+  nextSidebarState,
   readDockVisible,
   sidebarClasses,
   writeDockVisible,
@@ -134,7 +135,11 @@ function scheduleRefit() {
 }
 
 function toggleSidebar(side) {
-  sidebarState = { ...sidebarState, [side]: !sidebarState[side] };
+  sidebarState = nextSidebarState(
+    sidebarState,
+    side,
+    window.innerWidth <= 1024,
+  );
   writeSidebarVisibility(safeStorage(), sidebarState);
   toggleLeft.style.left = '';
   toggleRight.style.right = '';
@@ -797,6 +802,8 @@ let draggingNode = null;
 let dragOffset = { x: 0, y: 0 };
 let lastX = 0;
 let lastY = 0;
+const activePointers = new Map();
+let pinch = null;
 
 function scenePoint(event) {
   const rect = svg.getBoundingClientRect();
@@ -806,51 +813,112 @@ function scenePoint(event) {
   };
 }
 
+function svgPoint(event) {
+  const rect = svg.getBoundingClientRect();
+  return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+}
+
+function startPinch() {
+  const [first, second] = [...activePointers.values()];
+  if (!first || !second) return;
+  pinch = {
+    distance: Math.max(1, Math.hypot(first.x - second.x, first.y - second.y)),
+    midX: (first.x + second.x) / 2,
+    midY: (first.y + second.y) / 2,
+  };
+  dragging = false;
+  draggingNode = null;
+}
+
 svg.addEventListener('pointerdown', (event) => {
+  activePointers.set(event.pointerId, svgPoint(event));
+  svg.setPointerCapture(event.pointerId);
+  event.preventDefault();
+
+  if (activePointers.size >= 2) {
+    startPinch();
+    return;
+  }
+
   const node = event.target.closest?.('.node[data-id]');
   if (node && current?.id === 'graph') {
     draggingNode = node.getAttribute('data-id');
     const position = current.entry
       .layout(current.structure.getState(), viewport())
       .get(draggingNode);
-    const point = scenePoint(event);
+    const scene = scenePoint(event);
     dragOffset = position
-      ? { x: position.x - point.x, y: position.y - point.y }
+      ? { x: position.x - scene.x, y: position.y - scene.y }
       : { x: 0, y: 0 };
-    svg.setPointerCapture(event.pointerId);
-    event.preventDefault();
     return;
   }
+
   dragging = true;
-  lastX = event.clientX;
-  lastY = event.clientY;
-  svg.setPointerCapture(event.pointerId);
+  lastX = activePointers.get(event.pointerId).x;
+  lastY = activePointers.get(event.pointerId).y;
 });
+
 svg.addEventListener('pointermove', (event) => {
+  if (!activePointers.has(event.pointerId)) return;
+  const point = svgPoint(event);
+  activePointers.set(event.pointerId, point);
+
+  if (activePointers.size >= 2 && pinch) {
+    const [first, second] = [...activePointers.values()];
+    const distance = Math.max(1, Math.hypot(first.x - second.x, first.y - second.y));
+    const midX = (first.x + second.x) / 2;
+    const midY = (first.y + second.y) / 2;
+    const scale = Math.min(2.5, Math.max(0.4, zoom * distance / pinch.distance));
+    const factor = scale / zoom;
+    panX = midX + (panX - pinch.midX) * factor;
+    panY = midY + (panY - pinch.midY) * factor;
+    zoom = scale;
+    pinch = { distance, midX, midY };
+    applyTransform();
+    return;
+  }
+
   if (draggingNode) {
-    const point = scenePoint(event);
+    const scene = scenePoint(event);
     const state = current.structure.getState();
     state.pinned = state.pinned ?? {};
     state.pinned[draggingNode] = {
-      x: point.x + dragOffset.x,
-      y: point.y + dragOffset.y,
+      x: scene.x + dragOffset.x,
+      y: scene.y + dragOffset.y,
     };
     draw();
     return;
   }
+
   if (!dragging) return;
-  panX += event.clientX - lastX;
-  panY += event.clientY - lastY;
-  lastX = event.clientX;
-  lastY = event.clientY;
+  panX += point.x - lastX;
+  panY += point.y - lastY;
+  lastX = point.x;
+  lastY = point.y;
   applyTransform();
 });
-function endDrag() {
-  dragging = false;
-  draggingNode = null;
+
+function endPointer(event) {
+  activePointers.delete(event.pointerId);
+  if (activePointers.size < 2) {
+    pinch = null;
+  } else {
+    startPinch();
+  }
+
+  if (activePointers.size === 1) {
+    const [remaining] = [...activePointers.values()];
+    lastX = remaining.x;
+    lastY = remaining.y;
+    draggingNode = null;
+    dragging = true;
+  } else if (activePointers.size === 0) {
+    dragging = false;
+    draggingNode = null;
+  }
 }
-svg.addEventListener('pointerup', endDrag);
-svg.addEventListener('pointercancel', endDrag);
+svg.addEventListener('pointerup', endPointer);
+svg.addEventListener('pointercancel', endPointer);
 
 window.addEventListener('resize', scheduleRefit);
 
