@@ -9,14 +9,14 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 ## Features
 
 - 12 structures, each with its own operation toolbar and complexity table.
-- Step-by-step playback: play, pause, single step, speed control and reset. **Clear** in the header empties the active structure completely (keeping Array/Hash capacity slots and the Trie root), while **Reset** restores its demo state. The activity log has its own **Clear** button. Each step is numbered in the log, which auto-scrolls to the newest event. Press **Enter** in an argument field to run the primary operation and **Space** outside any control to toggle playback.
+- Step-by-step playback: play, pause, single step, speed control and reset. The primary operation of each structure and the Play button use an accented button style to stand out from secondary actions. **Clear** in the stage actions empties the active structure completely (keeping Array/Hash capacity slots and the Trie root), while **Reset** restores its demo state. The activity log has its own **Clear log** button. Each step is numbered in the log, which auto-scrolls to the newest event. Press **Enter** in an argument field to run the primary operation and **Space** outside any control to toggle playback.
 - Pure inline SVG renderer with reusable gradients, glow on the active node, cubic Bézier tree edges and rounded edge badges. Linear structures are visually distinct: Stack blocks in an open frame, Queue blocks in a lane with FRONT/BACK flow arrows, and Array cells in a contiguous memory strip with dotted reserved-capacity slots.
 - Multi-key trees draw each branch from its own separator (left of the first key, between keys, right of the last key); B+ trees also link their leaves left to right with arrows.
 - Hash tables use a three-stage left-to-right diagram: an **Input Key** card, a **Hash Function** block showing the live calculation (`25 mod 7 = 4`) and a vertical **Index / Value** table. A curved arrow points to the resulting row, chaining nodes hang off that row, and probe attempts are numbered and animated.
 - Persistent controls: the operation bar stays visible and the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
 - An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It never touches the structure SVG.
-- A 56px glassmorphism header with a theme-aware three-node SVG badge, monospaced `12 Structures` / `Vanilla JS` badges, **Random data** and the theme toggle. Zoom controls (+ / − / Reset view) float over the viewer, and Reset view re-fits the structure automatically.
-- Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base. Edge handles on the left and right borders collapse those sidebars independently. Both states persist in `localStorage` and re-fit the camera when the transition ends; the visualization panel stays always visible.
+- A 56px glassmorphism header with a theme-aware three-node SVG badge, monospaced `12 Structures` / `Vanilla JS` badges, the right-sidebar toggle and the theme toggle. **Random data**, **Clear**, **Export PNG** and **JSON / Share** live together in the stage actions. Zoom controls (+ / − / Reset view) float over the viewer, and Reset view re-fits the structure automatically.
+- Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base. The left sidebar folds from an edge handle and the right sidebar from the header toggle, independently. Both states persist in `localStorage`, start collapsed below 1024px, and re-fit the camera when the transition ends; the visualization panel stays always visible.
 - Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
 - Hash table with four collision strategies, three hash functions and universal hashing.
@@ -69,7 +69,7 @@ Then visit `http://localhost:8080`. Alternatively, use the live demo linked at t
 npm test
 ```
 
-322 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
+323 tests use the built-in `node:test` runner. Structure modules are pure JavaScript, so the same files run in the browser and in Node without a bundler.
 
 ## Architecture
 

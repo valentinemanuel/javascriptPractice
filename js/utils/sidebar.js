@@ -18,6 +18,12 @@ export function readSidebarVisibility(storage, defaults = { left: true, right: t
   };
 }
 
+/** Small screens start with both sidebars folded, without overwriting the saved preference. */
+export function initialSidebarState(storage, width = 1440) {
+  const state = readSidebarVisibility(storage);
+  return width < 1024 ? { ...state, left: false, right: false } : state;
+}
+
 export function writeSidebarVisibility(storage, state) {
   try {
     storage?.setItem?.(LEFT_KEY, String(Boolean(state.left)));

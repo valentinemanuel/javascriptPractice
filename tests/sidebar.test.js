@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   LEFT_KEY,
   RIGHT_KEY,
+  initialSidebarState,
   readSidebarVisibility,
   sidebarClasses,
   writeSidebarVisibility,
@@ -38,6 +39,14 @@ test('collapsed classes are derived from each sidebar independently', () => {
   assert.equal(sidebarClasses({ left: false, right: true }), 'layout left-collapsed');
   assert.equal(sidebarClasses({ left: true, right: false }), 'layout right-collapsed');
   assert.equal(sidebarClasses({ left: false, right: false }), 'layout left-collapsed right-collapsed');
+});
+
+test('small screens start collapsed without overwriting saved preferences', () => {
+  const storage = fakeStorage({ [LEFT_KEY]: 'true', [RIGHT_KEY]: 'true' });
+  assert.deepEqual(initialSidebarState(storage, 1440), { left: true, right: true });
+  assert.deepEqual(initialSidebarState(storage, 1023), { left: false, right: false });
+  assert.equal(storage.getItem(LEFT_KEY), 'true');
+  assert.equal(storage.getItem(RIGHT_KEY), 'true');
 });
 
 test('unavailable storage never throws', () => {

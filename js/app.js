@@ -7,7 +7,7 @@ import { applyRandomData } from './ui/random-data.js';
 import { computeFitTransform } from './core/fit.js';
 import { isPrimaryActionKey, isPlaybackShortcut, pickPrimaryOperation } from './core/shortcuts.js';
 import {
-  readSidebarVisibility,
+  initialSidebarState,
   sidebarClasses,
   writeSidebarVisibility,
 } from './utils/sidebar.js';
@@ -40,6 +40,7 @@ const logList = byId('log');
 const fields = byId('fields');
 const controlsPanel = byId('controls');
 const playPause = byId('play-pause');
+playPause.classList.add('is-primary');
 const stepButton = byId('step');
 const resetButton = byId('reset');
 const speedInput = byId('speed');
@@ -75,7 +76,7 @@ function safeStorage() {
   }
 }
 
-let sidebarState = readSidebarVisibility(safeStorage());
+let sidebarState = initialSidebarState(safeStorage(), window.innerWidth);
 let refitTimer = null;
 
 function applySidebarState() {
@@ -89,12 +90,9 @@ function positionEdgeToggles() {
 
   if (window.matchMedia?.('(max-width: 820px)')?.matches) {
     toggleLeft.style.left = '4px';
-    toggleRight.style.right = '4px';
   } else {
     const leftRect = layout.querySelector('.sidebar').getBoundingClientRect();
-    const rightRect = layout.querySelector('.info-panel').getBoundingClientRect();
     toggleLeft.style.left = `${Math.max(4, leftRect.right - layoutRect.left - 13)}px`;
-    toggleRight.style.right = `${Math.max(4, layoutRect.right - rightRect.left - 13)}px`;
   }
 }
 
@@ -110,7 +108,6 @@ function toggleSidebar(side) {
   sidebarState = { ...sidebarState, [side]: !sidebarState[side] };
   writeSidebarVisibility(safeStorage(), sidebarState);
   toggleLeft.style.left = '';
-  toggleRight.style.right = '';
   applySidebarState();
   if (window.matchMedia?.('(max-width: 820px)')?.matches) positionEdgeToggles();
   scheduleRefit();
@@ -332,6 +329,7 @@ function buildToolbar() {
   toolbar.replaceChildren();
   configurationButtons.replaceChildren();
   const operations = current.structure.meta.operations ?? {};
+  const buttons = new Map();
   let configCount = 0;
 
   for (const [name, operation] of Object.entries(operations)) {
@@ -344,10 +342,12 @@ function buildToolbar() {
       configCount += 1;
     } else {
       toolbar.append(button);
+      buttons.set(name, button);
     }
   }
 
   primaryOperation = pickPrimaryOperation(operations);
+  buttons.get(primaryOperation?.name)?.classList.add('is-primary');
   configDetails.hidden = configCount === 0;
   if (configCount === 0) configDetails.open = false;
   configSummary.textContent = current.id === 'graph'
