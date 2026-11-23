@@ -1,10 +1,10 @@
 :root {
   color-scheme: dark;
-  --bg: #090a0f;
-  --panel: #11131a;
-  --panel-2: #181b24;
-  --border: #1e222d;
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  --bg: #0d1117;
+  --panel: #151b23;
+  --panel-2: #1c2430;
+  --border: #2a3441;
+  --border-subtle: rgba(255, 255, 255, 0.08);
   --text: #e6edf3;
   --text-primary: #e6edf3;
   --muted: #8b98a8;
@@ -14,15 +14,15 @@
   --found: #3fb950;
   --miss: #f85149;
   --probe: #bc8cff;
-  --grad-default-1: #2a2e38;
-  --grad-default-2: #11131a;
+  --grad-default-1: #33445a;
+  --grad-default-2: #151b23;
   --grad-active-1: #79c0ff;
   --grad-active-2: #1f5f9e;
   --grad-found-1: #56d364;
   --grad-found-2: #176b33;
-  --edge: #58606f;
-  --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
-  --panel-glass: rgba(17, 19, 26, 0.82);
+  --edge: #5b6b7c;
+  --shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  --panel-glass: rgba(15, 23, 42, 0.72);
 }
 
 html[data-theme="light"] {
@@ -107,7 +107,7 @@ button[disabled] { opacity: 0.45; cursor: not-allowed; }
   height: 56px;
   padding: 0 20px;
   border-bottom: 1px solid var(--border-subtle);
-  background: rgba(17, 19, 26, 0.82);
+  background: rgba(15, 23, 42, 0.72);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
@@ -145,8 +145,8 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   box-shadow: var(--shadow);
 }
 .edge-toggle svg {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   fill: none;
   stroke: currentColor;
   stroke-width: 1.5;
@@ -156,12 +156,12 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
 .edge-toggle.left,
 .edge-toggle.right {
   top: 50%;
-  width: 22px;
-  height: 44px;
+  width: 26px;
+  height: 52px;
   transform: translateY(-50%);
 }
-.edge-toggle.left { left: max(4px, calc(12px + var(--left-col) - 11px)); }
-.edge-toggle.right { right: max(4px, calc(12px + var(--right-col) - 11px)); }
+.edge-toggle.left { left: max(4px, calc(12px + var(--left-col) - 13px)); }
+.edge-toggle.right { right: max(4px, calc(12px + var(--right-col) - 13px)); }
 .edge-toggle[aria-pressed="true"] {
   color: var(--accent);
   border-color: var(--accent);
