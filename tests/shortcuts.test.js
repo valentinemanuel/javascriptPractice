@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registry } from '../js/registry.js';
 import {
+  isConfigOperation,
   isTextEntry,
   isPrimaryActionKey,
   isPlaybackShortcut,
@@ -39,6 +40,14 @@ test('Space toggles playback only outside inputs and controls', () => {
   assert.equal(isPlaybackShortcut({ key: ' ', code: 'Space', target: target('button') }), false);
   assert.equal(isPlaybackShortcut({ key: 'Enter', target: target('body') }), false);
   assert.equal(isPlaybackShortcut(null), false);
+});
+
+test('the B-tree degree control stays in the main toolbar', () => {
+  assert.equal(isConfigOperation('btree', 'useDegree'), false);
+  assert.equal(isConfigOperation('b-plus-tree', 'useDegree'), false);
+  assert.equal(isConfigOperation('hash-table', 'useChaining'), true);
+  assert.equal(isConfigOperation('graph', 'useDirected'), true);
+  assert.equal(isConfigOperation('btree', 'insert'), false);
 });
 
 test('Enter picks the insertion action, not reads or configuration setters', () => {

@@ -7,6 +7,7 @@ import { applyRandomData } from './ui/random-data.js';
 import { computeFitTransform } from './core/fit.js';
 import {
   isPrimaryActionKey,
+  isConfigOperation,
   isPlaybackShortcut,
   isTextEntry,
   pickPrimaryOperation,
@@ -39,6 +40,7 @@ const toolbar = byId('operation-buttons');
 const configurationButtons = byId('configuration-buttons');
 const configDetails = byId('config-details');
 const configSummary = byId('config-summary');
+const configFields = byId('config-fields');
 const complexityToggle = byId('complexity-toggle');
 const structureCount = byId('structure-count');
 const headerStructureCount = byId('header-structure-count');
@@ -271,8 +273,8 @@ function parseField(raw, type) {
   return Number.isFinite(number) ? number : raw;
 }
 
-function buildFields(operations = {}) {
-  fields.replaceChildren();
+function buildFields(container, operations = {}) {
+  container.replaceChildren();
   const seen = new Set();
   const descriptors = [];
   for (const operation of Object.values(operations)) {
@@ -287,7 +289,7 @@ function buildFields(operations = {}) {
     const hint = document.createElement('span');
     hint.className = 'fields-hint';
     hint.textContent = 'No arguments needed for this operation.';
-    fields.append(hint);
+    container.append(hint);
     return;
   }
 
@@ -302,14 +304,15 @@ function buildFields(operations = {}) {
     input.placeholder = descriptor.placeholder ?? '';
     input.autocomplete = 'off';
     label.append(caption, input);
-    fields.append(label);
+    container.append(label);
   }
 }
 
 function readFields(operation) {
   const values = [];
   for (const descriptor of operation.fields ?? []) {
-    const input = fields.querySelector(`[data-name="${descriptor.name}"]`);
+    const selector = `[data-name="${descriptor.name}"]`;
+    const input = fields.querySelector(selector) ?? configFields.querySelector(selector);
     const raw = input?.value ?? '';
     if (raw.trim() === '') {
       if (descriptor.required !== false) {
@@ -356,30 +359,32 @@ function buildToolbar() {
   toolbar.replaceChildren();
   configurationButtons.replaceChildren();
   const operations = current.structure.meta.operations ?? {};
-  let configCount = 0;
+  const mainOperations = {};
+  const configOperations = {};
 
   for (const [name, operation] of Object.entries(operations)) {
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = operation.label ?? name;
     button.addEventListener('click', () => runOperation(name, operation));
-    if (name.startsWith('use') || name.startsWith('new')) {
+    const isConfig = isConfigOperation(current.id, name);
+    if (isConfig) {
       configurationButtons.append(button);
-      configCount += 1;
+      configOperations[name] = operation;
     } else {
       toolbar.append(button);
+      mainOperations[name] = operation;
     }
   }
 
-  primaryOperation = pickPrimaryOperation(operations);
-  configDetails.hidden = configCount === 0;
-  if (configCount === 0) configDetails.open = false;
+  primaryOperation = pickPrimaryOperation(mainOperations);
+  configDetails.hidden = Object.keys(configOperations).length === 0;
+  if (configDetails.hidden) configDetails.open = false;
   configSummary.textContent = current.id === 'graph'
     ? 'Strategy & graph settings'
-    : current.id === 'btree' || current.id === 'b-plus-tree'
-      ? 'Tree degree settings'
-      : 'Strategy & hash settings';
-  buildFields(operations);
+    : 'Strategy & hash settings';
+  buildFields(fields, mainOperations);
+  buildFields(configFields, configOperations);
 }
 
 function runOperation(name, operation) {
@@ -441,6 +446,12 @@ fields.addEventListener('keydown', (event) => {
   if (!isPrimaryActionKey(event) || !primaryOperation) return;
   event.preventDefault();
   runOperation(primaryOperation.name, primaryOperation.operation);
+});
+
+configFields.addEventListener('keydown', (event) => {
+  if (!isPrimaryActionKey(event)) return;
+  event.preventDefault();
+  configurationButtons.querySelector('button')?.click();
 });
 
 document.addEventListener('keydown', (event) => {
