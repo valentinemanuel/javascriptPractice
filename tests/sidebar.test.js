@@ -1,11 +1,14 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  DOCK_KEY,
   LEFT_KEY,
   RIGHT_KEY,
   initialSidebarState,
+  readDockVisible,
   readSidebarVisibility,
   sidebarClasses,
+  writeDockVisible,
   writeSidebarVisibility,
 } from '../js/utils/sidebar.js';
 
@@ -49,8 +52,20 @@ test('small screens start collapsed without overwriting saved preferences', () =
   assert.equal(storage.getItem(RIGHT_KEY), 'true');
 });
 
+test('dock visibility is persisted and defaults to open', () => {
+  assert.equal(readDockVisible(null), true);
+  assert.equal(readDockVisible(fakeStorage()), true);
+  const storage = fakeStorage({ [DOCK_KEY]: 'false' });
+  assert.equal(readDockVisible(storage), false);
+  writeDockVisible(storage, true);
+  assert.equal(storage.getItem(DOCK_KEY), 'true');
+  assert.equal(readDockVisible(storage), true);
+});
+
 test('unavailable storage never throws', () => {
   const broken = { getItem() { throw new Error('blocked'); }, setItem() { throw new Error('blocked'); } };
   assert.deepEqual(readSidebarVisibility(broken), { left: true, right: true });
+  assert.equal(readDockVisible(broken), true);
   assert.doesNotThrow(() => writeSidebarVisibility(broken, { left: false, right: false }));
+  assert.doesNotThrow(() => writeDockVisible(broken, false));
 });
