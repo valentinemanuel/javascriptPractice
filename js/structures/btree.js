@@ -6,7 +6,7 @@ export const meta = {
   group: 'Trees',
   layout: 'multiKey',
   description:
-    'A balanced multiway search tree. Every node stores sorted keys, every internal node has one more child than it has keys, and all leaves stay at the same depth. Insertion descends to a leaf and splits overflowing nodes bottom-up on the way back to the root, while deletion borrows keys from siblings or merges them when a child would fall below the minimum. The default order is 4, which gives a minimum degree t = 2. Odd orders are rounded up to the next even order so splits and merges stay balanced. Duplicate keys are ignored and keys are treated as numbers.',
+    'A balanced multiway search tree. Every node stores sorted keys, every internal node has one more child than it has keys, and all leaves stay at the same depth. Insertion descends to a leaf and splits overflowing nodes bottom-up on the way back to the root, while deletion borrows keys from siblings or merges them when a child would fall below the minimum. The default order is 4, which gives a minimum degree t = 2. Use the degree control to change t at any time: the tree rebuilds itself from its keys with order 2t, rounding up to an even order so splits and merges stay balanced. Duplicate keys are ignored and keys are treated as numbers.',
   demo: [10, 20, 5, 6, 12, 30, 7, 17],
   operations: {
     insert: {
@@ -36,6 +36,15 @@ export const meta = {
       average: { symbol: 'Θ(log_m n)', text: 'descent follows one root-to-leaf path, with m = order' },
       worst: { symbol: 'O(log n)', text: 'the tree height is logarithmic in n and m = order bounds the fan-out' },
     },
+    useDegree: {
+      signature: 'useDegree(t)',
+      label: 'Set degree t',
+      fields: [{ name: 't', label: 'Degree t', type: 'number', placeholder: 'e.g. 2' }],
+      description: 'Rebuilds the tree with minimum degree t, so the maximum order becomes 2t and every node keeps between t-1 and 2t-1 keys.',
+      best: { symbol: 'Ω(n log n)', text: 'all n keys are collected and reinserted into the new tree' },
+      average: { symbol: 'Θ(n log n)', text: 'every key is reinserted into the new tree' },
+      worst: { symbol: 'O(n log n)', text: 'all keys are reinserted with splits' },
+    },
   },
 };
 
@@ -60,9 +69,41 @@ export class BTree extends BaseStructure {
     return { order: this.order, root: null, nodes: [], edges: [] };
   }
 
+  restore(state) {
+    super.restore(state);
+    const requested = Math.max(4, Math.floor(Number(this.state.order) || 4));
+    this.order = requested % 2 === 0 ? requested : requested + 1;
+    this.state.order = this.order;
+    this.t = this.order / 2;
+    this.maxKeys = this.order - 1;
+    this.minKeys = this.t - 1;
+    return this;
+  }
+
   seed(values = []) {
     for (const value of values) this._runInsert(value);
     return this;
+  }
+
+  *useDegree(t) {
+    const degree = Math.max(2, Math.floor(Number(t) || 2));
+    const order = degree * 2;
+    const keys = this.state.nodes.flatMap((node) => node.keys).sort((a, b) => a - b);
+
+    this.order = order;
+    this.t = degree;
+    this.maxKeys = order - 1;
+    this.minKeys = degree - 1;
+    this._resetIds();
+    this.state = this.initialState();
+    for (const key of keys) this._runInsert(key);
+
+    yield {
+      type: 'visit',
+      message: `Rebuilt the B-tree with minimum degree ${degree} (order ${order}) and ${keys.length} key(s).`,
+      focus: this.state.nodes.map((node) => node.id),
+    };
+    return order;
   }
 
   /* ------------------------------------------------------------------ *

@@ -166,6 +166,34 @@ function validateStructure(tree) {
   return values;
 }
 
+test('changing the degree rebuilds the tree and keeps the leaf chain', () => {
+  const tree = new BPlusTree().seed([5, 10, 15, 20, 25, 30, 35]);
+  const before = chainLeaves(tree.getState()).flatMap((leaf) => leaf.keys);
+  const { steps, result } = collect(tree.useDegree(3));
+
+  assert.equal(result, 6);
+  assert.equal(tree.getState().order, 6);
+  assert.equal(tree._order, 6);
+  assert.deepEqual(chainLeaves(tree.getState()).flatMap((leaf) => leaf.keys), before);
+  assert.equal(steps.length, 1);
+  assert.match(steps[0].message, /minimum degree 3 \(order 6\)/);
+  validateStructure(tree);
+
+  run(tree.insert(40));
+  validateStructure(tree);
+  run(tree.delete(5));
+  validateStructure(tree);
+});
+
+test('degree changes clamp to a minimum degree of two and an even order', () => {
+  const tree = new BPlusTree().seed([1, 2, 3]);
+  assert.equal(run(tree.useDegree(1)), 4);
+  assert.equal(tree.getState().order, 4);
+  assert.equal(tree._order, 4);
+  assert.equal(run(tree.useDegree(2.9)), 4);
+  validateStructure(tree);
+});
+
 test('the class exposes static metadata for the app shell', () => {
   assert.equal(BPlusTree.meta, meta);
   assert.equal(meta.id, 'b-plus-tree');
@@ -177,7 +205,7 @@ test('the class exposes static metadata for the app shell', () => {
 
 test('metadata declares Omega, Theta and Big O for every operation', () => {
   const notation = { best: 'Ω', average: 'Θ', worst: 'O' };
-  assert.deepEqual(Object.keys(meta.operations), ['insert', 'search', 'rangeQuery', 'delete']);
+  assert.deepEqual(Object.keys(meta.operations), ['insert', 'search', 'rangeQuery', 'delete', 'useDegree']);
   for (const [name, operation] of Object.entries(meta.operations)) {
     assert.equal(typeof operation.description, 'string', name);
     for (const [bound, prefix] of Object.entries(notation)) {
@@ -197,6 +225,7 @@ test('metadata declares argument fields in order', () => {
   assert.deepEqual(meta.operations.search.fields.map((field) => field.name), ['key']);
   assert.deepEqual(meta.operations.rangeQuery.fields.map((field) => field.name), ['low', 'high']);
   assert.deepEqual(meta.operations.delete.fields.map((field) => field.name), ['key']);
+  assert.deepEqual(meta.operations.useDegree.fields.map((field) => field.name), ['t']);
   for (const operation of Object.values(meta.operations)) {
     for (const field of operation.fields ?? []) {
       assert.ok(['number', 'string'].includes(field.type));

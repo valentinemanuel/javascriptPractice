@@ -330,7 +330,7 @@ test('the class exposes static metadata for the app shell', () => {
   assert.equal(meta.group, 'Trees');
   assert.equal(meta.layout, 'multiKey');
   assert.deepEqual(meta.demo, [10, 20, 5, 6, 12, 30, 7, 17]);
-  assert.deepEqual(Object.keys(meta.operations), ['insert', 'search', 'delete']);
+  assert.deepEqual(Object.keys(meta.operations), ['insert', 'search', 'delete', 'useDegree']);
   assert.equal(typeof meta.description, 'string');
 });
 
@@ -341,14 +341,18 @@ test('metadata declares fields and Omega, Theta and Big O for every operation', 
     assert.equal(typeof operation.signature, 'string', name);
     assert.deepEqual(
       operation.fields,
-      [{ name: 'key', label: 'Key', type: 'number', placeholder: 'e.g. 10' }],
+      name === 'useDegree'
+        ? [{ name: 't', label: 'Degree t', type: 'number', placeholder: 'e.g. 2' }]
+        : [{ name: 'key', label: 'Key', type: 'number', placeholder: 'e.g. 10' }],
       name,
     );
     for (const [bound, prefix] of Object.entries(notation)) {
       assert.equal(typeof operation[bound].symbol, 'string', `${name}.${bound}`);
       assert.ok(operation[bound].symbol.startsWith(prefix), `${name}.${bound} prefix`);
       assert.equal(typeof operation[bound].text, 'string', `${name}.${bound}`);
-      assert.match(operation[bound].text, /m = order/, `${name}.${bound} must mention m = order`);
+      if (name !== 'useDegree') {
+        assert.match(operation[bound].text, /m = order/, `${name}.${bound} must mention m = order`);
+      }
     }
   }
 });
@@ -362,8 +366,41 @@ test('every yielded step is well formed', () => {
     tree.search(999),
     tree.delete(6),
     tree.delete(999),
+    tree.useDegree(3),
   ];
   for (const operation of operations) assertWellFormed([...operation].map((step) => step));
+});
+
+test('changing the degree rebuilds the tree and preserves every key', () => {
+  const tree = new BTree().seed([10, 20, 5, 6, 12, 30, 7, 17]);
+  const before = inOrderKeys(tree.getState());
+  const { steps, value } = run(tree.useDegree(3));
+
+  assert.equal(value, 6);
+  assert.equal(tree.t, 3);
+  assert.equal(tree.order, 6);
+  assert.equal(tree.getState().order, 6);
+  assert.deepEqual(inOrderKeys(tree.getState()), before);
+  assert.equal(steps.length, 1);
+  assert.match(steps[0].message, /minimum degree 3 \(order 6\)/);
+  assertInvariants(tree);
+
+  run(tree.insert(99));
+  assertInvariants(tree);
+  run(tree.delete(10));
+  assertInvariants(tree);
+});
+
+test('degree changes clamp to a minimum degree of two and an even order', () => {
+  const tree = new BTree().seed([1, 2, 3]);
+  assert.equal(run(tree.useDegree(1)).value, 4);
+  assert.equal(tree.t, 2);
+  assert.equal(tree.order, 4);
+  assert.equal(tree.getState().order, 4);
+
+  assert.equal(run(tree.useDegree(2.9)).value, 4);
+  assert.equal(tree.order, 4);
+  assertInvariants(tree);
 });
 
 test('a deterministic random workload preserves all invariants', () => {

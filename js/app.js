@@ -376,7 +376,9 @@ function buildToolbar() {
   if (configCount === 0) configDetails.open = false;
   configSummary.textContent = current.id === 'graph'
     ? 'Strategy & graph settings'
-    : 'Strategy & hash settings';
+    : current.id === 'btree' || current.id === 'b-plus-tree'
+      ? 'Tree degree settings'
+      : 'Strategy & hash settings';
   buildFields(operations);
 }
 

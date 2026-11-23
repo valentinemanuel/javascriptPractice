@@ -155,6 +155,22 @@ test('a B-tree keeps a custom order after an import', () => {
   assert.ok(restored.getState().nodes.some((node) => node.keys.includes(13)));
 });
 
+test('a degree changed with useDegree survives export and import', () => {
+  const tree = new registry.btree.Structure().reset([1, 2, 3, 4, 5]);
+  run(tree.useDegree(3));
+  const payload = createPayload('btree', tree.getState());
+
+  assert.equal(payload.settings.order, 6);
+  const restored = createStructure('btree', registry, payload.settings);
+  restored.restore(payload.data);
+  assert.equal(restored.order, 6);
+  assert.equal(restored.t, 3);
+  assert.equal(restored.getState().order, 6);
+
+  run(restored.insert(9));
+  assert.ok(restored.getState().nodes.some((node) => node.keys.includes(9)));
+});
+
 test('graph indexes survive a restore and still accept new vertices', () => {
   const graph = new registry.graph.Structure().reset();
   const payload = createPayload('graph', graph.getState());
