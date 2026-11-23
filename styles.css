@@ -282,13 +282,13 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   justify-content: space-between;
   gap: 16px;
   padding: 13px 17px 11px;
-  border: 1px solid var(--border);
-  border-bottom: none;
-  border-radius: 12px 12px 0 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
   background: var(--panel-glass);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   flex: none;
+  margin-bottom: 8px;
   z-index: 2;
 }
 .stage-kicker {
