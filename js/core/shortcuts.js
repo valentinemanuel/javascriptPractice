@@ -25,6 +25,11 @@ export function isPlaybackShortcut(event) {
   return !isTextEntry(event.target) && !matches(event.target, INTERACTIVE);
 }
 
+/** Current minimum degree derived from the canonical B-tree state. */
+export function degreeFromState(state) {
+  return Number.isInteger(state?.order) ? state.order / 2 : 2;
+}
+
 /** Config setters live in the accordion, except the B-tree degree control. */
 export function isConfigOperation(id, name) {
   const isSetting = name.startsWith('use') || name.startsWith('new');

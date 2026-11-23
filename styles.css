@@ -433,6 +433,9 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   overflow: hidden;
 }
 .fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; min-height: 34px; }
+.degree-control { display: flex; align-items: flex-end; gap: 8px; }
+.degree-control .field input { width: 92px; }
+.degree-button { height: 34px; padding: 0 12px; font-size: 12px; }
 .fields-hint { font-size: 11px; color: var(--muted); align-self: center; }
 .field { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); }
 .field input {

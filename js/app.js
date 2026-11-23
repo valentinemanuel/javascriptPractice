@@ -7,6 +7,7 @@ import { applyRandomData } from './ui/random-data.js';
 import { computeFitTransform } from './core/fit.js';
 import {
   isPrimaryActionKey,
+  degreeFromState,
   isConfigOperation,
   isPlaybackShortcut,
   isTextEntry,
@@ -172,6 +173,10 @@ const animator = new Animator({
     appendLog(`#${stepCount} ${step.message}`, step.type);
   },
   onDone() {
+    if (activeOperation === 'useDegree' && current) {
+      const input = fields.querySelector('[data-name="t"]');
+      if (input) input.value = String(degreeFromState(current.structure.getState()));
+    }
     appendLog('Operation finished.', 'done');
   },
   onStatus(status) {
@@ -355,14 +360,53 @@ function buildNav() {
   }
 }
 
+function buildDegreeControl(operation) {
+  const descriptor = operation.fields?.[0] ?? { name: 't', label: 'Degree t' };
+  const wrapper = document.createElement('div');
+  wrapper.className = 'degree-control';
+
+  const label = document.createElement('label');
+  label.className = 'field';
+  const caption = document.createElement('span');
+  caption.textContent = descriptor.label ?? 'Degree t';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.dataset.name = descriptor.name;
+  input.placeholder = descriptor.placeholder ?? '';
+  input.autocomplete = 'off';
+  input.value = String(degreeFromState(current.structure.getState()));
+  input.addEventListener('keydown', (event) => {
+    if (!isPrimaryActionKey(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    runOperation('useDegree', operation);
+  });
+  label.append(caption, input);
+
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'degree-button';
+  button.textContent = operation.label ?? 'Set degree t';
+  button.addEventListener('click', () => runOperation('useDegree', operation));
+
+  wrapper.append(label, button);
+  return wrapper;
+}
+
 function buildToolbar() {
   toolbar.replaceChildren();
   configurationButtons.replaceChildren();
   const operations = current.structure.meta.operations ?? {};
   const mainOperations = {};
   const configOperations = {};
+  const isTree = current.id === 'btree' || current.id === 'b-plus-tree';
+  let degreeOperation = null;
 
   for (const [name, operation] of Object.entries(operations)) {
+    if (isTree && name === 'useDegree') {
+      degreeOperation = operation;
+      continue;
+    }
     const button = document.createElement('button');
     button.type = 'button';
     button.textContent = operation.label ?? name;
@@ -385,6 +429,7 @@ function buildToolbar() {
     : 'Strategy & hash settings';
   buildFields(fields, mainOperations);
   buildFields(configFields, configOperations);
+  if (degreeOperation) fields.append(buildDegreeControl(degreeOperation));
 }
 
 function runOperation(name, operation) {

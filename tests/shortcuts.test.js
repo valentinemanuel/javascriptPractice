@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { registry } from '../js/registry.js';
 import {
+  degreeFromState,
   isConfigOperation,
   isTextEntry,
   isPrimaryActionKey,
@@ -40,6 +41,12 @@ test('Space toggles playback only outside inputs and controls', () => {
   assert.equal(isPlaybackShortcut({ key: ' ', code: 'Space', target: target('button') }), false);
   assert.equal(isPlaybackShortcut({ key: 'Enter', target: target('body') }), false);
   assert.equal(isPlaybackShortcut(null), false);
+});
+
+test('the current degree is derived from the B-tree order', () => {
+  assert.equal(degreeFromState({ order: 8 }), 4);
+  assert.equal(degreeFromState({ order: 4 }), 2);
+  assert.equal(degreeFromState({}), 2);
 });
 
 test('the B-tree degree control stays in the main toolbar', () => {
