@@ -98,17 +98,17 @@ function applySidebarState() {
 }
 
 function positionEdgeToggles() {
-  const layoutRect = layout.getBoundingClientRect();
-
   if (window.matchMedia?.('(max-width: 820px)')?.matches) {
-    toggleLeft.style.left = '4px';
-    toggleRight.style.right = '4px';
-  } else {
-    const leftRect = layout.querySelector('.sidebar').getBoundingClientRect();
-    const rightRect = layout.querySelector('.info-panel').getBoundingClientRect();
-    toggleLeft.style.left = `${Math.max(4, leftRect.right - layoutRect.left - 13)}px`;
-    toggleRight.style.right = `${Math.max(4, layoutRect.right - rightRect.left - 13)}px`;
+    toggleLeft.style.left = '';
+    toggleRight.style.right = '';
+    return;
   }
+
+  const layoutRect = layout.getBoundingClientRect();
+  const leftRect = layout.querySelector('.sidebar').getBoundingClientRect();
+  const rightRect = layout.querySelector('.info-panel').getBoundingClientRect();
+  toggleLeft.style.left = `${Math.max(4, leftRect.right - layoutRect.left - 13)}px`;
+  toggleRight.style.right = `${Math.max(4, layoutRect.right - rightRect.left - 13)}px`;
 }
 
 function applyDockState() {

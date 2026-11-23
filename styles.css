@@ -826,7 +826,26 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
     min-height: 420px;
     max-height: 760px;
   }
-  .sidebar, .info-panel { order: 1; max-height: none; overflow: visible; }
+  .edge-toggle.left { order: 0; }
+  .edge-toggle.right { order: 1; }
+  .sidebar { order: 2; }
+  .info-panel { order: 3; }
+  .sidebar, .info-panel { max-height: none; overflow: visible; }
+  .edge-toggle.left, .edge-toggle.right {
+    position: static;
+    top: auto;
+    width: 100%;
+    height: 36px;
+    transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0 12px;
+    border-radius: 8px;
+    background: var(--panel-glass);
+  }
+  .edge-toggle::after { content: attr(aria-label); font-size: 12px; font-weight: 600; }
   .panel-inner, .info-panel .panel-inner { min-width: 0; width: 100%; }
   .layout.left-collapsed .sidebar,
   .layout.right-collapsed .info-panel { display: none; }
@@ -841,7 +860,6 @@ html[data-theme="light"] .topbar { background: rgba(255, 255, 255, 0.72); }
   .viewer-tools { top: 8px; right: 8px; padding: 3px; }
   .viewer-tools button { height: 30px; min-width: 30px; padding: 0 7px; font-size: 11px; }
   .state-legend { top: 54px; bottom: auto; left: 8px; }
-  .edge-toggle.left, .edge-toggle.right { top: min(38dvh, 340px); }
 
   .dock { bottom: 8px; max-width: calc(100% - 16px); }
   .controls {
