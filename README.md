@@ -15,7 +15,7 @@ Every operation runs step by step, narrates what happens in an accessible log, h
 - Hash tables use a three-stage left-to-right diagram: an **Input Key** card, a **Hash Function** block showing the live calculation (`25 mod 7 = 4`) and a vertical **Index / Value** table. A curved arrow points to the resulting row, chaining nodes hang off that row, and probe attempts are numbered and animated.
 - Persistent controls: the floating bottom dock can be collapsed from its chevron tab or with **H**, freeing the full viewer height for fitting; the complexity panel shows only the active operation by default (with a **Show all** toggle), so no scrolling is needed.
 - An Antigravity-style interactive background on its own `<canvas>`: a uniform particle grid that reacts to the pointer, a faint mouse-following radial glow and automatic Dark/Light palettes. It never touches the structure SVG.
-- A 56px glassmorphism header with a theme-aware three-node SVG badge, monospaced `12 Structures` / `Vanilla JS` badges and the theme toggle. The right sidebar folds from a handle on its border. **Random data**, **Clear**, **Export PNG** and **JSON / Share** live together in the stage actions. Zoom controls (+ / − / Reset view) float over the viewer, and Reset view re-fits the structure automatically.
+- A 56px glassmorphism header with a theme-aware three-node SVG badge, monospaced `12 Structures` / `Vanilla JS` badges and the theme toggle. **Random data**, **Clear**, **Export PNG** and **JSON / Share** live together in the stage actions. Zoom controls (+ / − / Reset view) float over the viewer, and Reset view re-fits the structure automatically.
 - Glassmorphism panels (translucent background + `backdrop-filter: blur(12px)`), a transparent SVG stage and a floating rounded control dock at its base. Both sidebars fold from their own edge handles, independently. Both states persist in `localStorage`, start collapsed below 1024px, and re-fit the camera when the transition ends; the visualization panel stays always visible.
 - Complexity cells show compact Ω / Θ / O pills; the full explanation lives below the table and in per-cell tooltips.
 - SVG favicon, dark and light themes, responsive layout and `prefers-reduced-motion` support.
@@ -83,6 +83,7 @@ js/
   registry.js         Structure catalogue
   ui/
     background.js     Interactive particle/glow canvas behind the UI
+    random-data.js    Generates fresh demo data for every structure
   core/
     BaseStructure.js  Shared contract for all structures
     Animator.js       Drives generator-based operations

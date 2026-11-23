@@ -45,7 +45,6 @@ const headerStructureCount = byId('header-structure-count');
 const complexityPanel = byId('complexity');
 const logList = byId('log');
 const fields = byId('fields');
-const controlsPanel = byId('controls');
 const dock = byId('dock');
 const toggleDock = byId('toggle-dock');
 const playPause = byId('play-pause');
